@@ -249,49 +249,63 @@ export default function Home() {
               )}
 
               {/* Missing Merchant SKUs Report */}
-              {missingMerchantSkus.length > 0 && (
-                <div className="bg-white rounded-lg shadow p-6 border-2 border-yellow-300">
-                  <div className="flex justify-between items-center mb-4">
-                    <div>
-                      <h2 className="text-xl font-semibold text-yellow-800">⚠️ Missing Merchant SKUs</h2>
-                      <p className="text-sm text-gray-600 mt-1">
-                        Merchant SKUs from TikTok, Shopee, and Lazada orders that are not yet hardcoded in the reference files
-                      </p>
-                    </div>
+              <div className={`bg-white rounded-lg shadow p-6 border-2 ${missingMerchantSkus.length > 0 ? 'border-yellow-300' : 'border-green-300'}`}>
+                <div className="flex justify-between items-center mb-4">
+                  <div>
+                    <h2 className={`text-xl font-semibold ${missingMerchantSkus.length > 0 ? 'text-yellow-800' : 'text-green-800'}`}>
+                      {missingMerchantSkus.length > 0 ? '⚠️ Missing Merchant SKUs' : '✅ All Merchant SKUs Present'}
+                    </h2>
+                    <p className="text-sm text-gray-600 mt-1">
+                      {missingMerchantSkus.length > 0 
+                        ? 'Merchant SKUs from TikTok, Shopee, and Lazada orders that are not yet hardcoded in the reference files'
+                        : 'All merchant SKUs from TikTok, Shopee, and Lazada orders are present in the reference files'}
+                    </p>
+                  </div>
+                  {missingMerchantSkus.length > 0 && (
                     <button
                       onClick={handleExportMissingSkus}
                       className="px-4 py-2 bg-yellow-600 text-white rounded hover:bg-yellow-700"
                     >
                       Export to Excel
                     </button>
-                  </div>
-                  <div className="mb-4 text-sm text-gray-600">
-                    <p>Total Missing Merchant SKUs: <span className="font-semibold">{missingMerchantSkus.length}</span></p>
-                  </div>
-                  <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-gray-200">
-                      <thead className="bg-yellow-50">
-                        <tr>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Marketplace
-                          </th>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Merchant SKU
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody className="bg-white divide-y divide-gray-200">
-                        {missingMerchantSkus.map((item, idx) => (
-                          <tr key={idx} className="hover:bg-yellow-50">
-                            <td className="px-4 py-3 text-sm font-medium text-gray-900">{item.marketplace}</td>
-                            <td className="px-4 py-3 text-sm text-gray-900">{item.merchant_sku}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
+                  )}
                 </div>
-              )}
+                {missingMerchantSkus.length > 0 ? (
+                  <>
+                    <div className="mb-4 text-sm text-gray-600">
+                      <p>Total Missing Merchant SKUs: <span className="font-semibold">{missingMerchantSkus.length}</span></p>
+                    </div>
+                    <div className="overflow-x-auto">
+                      <table className="min-w-full divide-y divide-gray-200">
+                        <thead className="bg-yellow-50">
+                          <tr>
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Marketplace
+                            </th>
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Merchant SKU
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody className="bg-white divide-y divide-gray-200">
+                          {missingMerchantSkus.map((item, idx) => (
+                            <tr key={idx} className="hover:bg-yellow-50">
+                              <td className="px-4 py-3 text-sm font-medium text-gray-900">{item.marketplace}</td>
+                              <td className="px-4 py-3 text-sm text-gray-900">{item.merchant_sku}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </>
+                ) : (
+                  <div className="text-center py-8">
+                    <div className="text-4xl mb-2">✅</div>
+                    <p className="text-lg font-semibold text-green-700">All merchant SKUs are accounted for!</p>
+                    <p className="text-sm text-gray-600 mt-2">No missing merchant SKUs found in TikTok, Shopee, and Lazada orders.</p>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         )}
