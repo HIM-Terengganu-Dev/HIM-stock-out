@@ -119,7 +119,7 @@ export default function VisualsView({
                 <YAxis dataKey="name" type="category" width={100} tick={{ fontSize: 12 }} />
                 <Tooltip
                   contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                  formatter={(value: number) => [`${value} ${mode === 'quantity' ? 'units' : 'SKUs'}`, mode === 'quantity' ? 'Stock-Out Qty' : 'Count']}
+                  formatter={(value: any) => [`${value} ${mode === 'quantity' ? 'units' : 'SKUs'}`, mode === 'quantity' ? 'Stock-Out Qty' : 'Count']}
                 />
                 <Bar dataKey="value" fill="#0088FE" radius={[0, 4, 4, 0]}>
                   {aggregatedData.map((entry, index) => (
@@ -162,7 +162,7 @@ export default function VisualsView({
                 </Pie>
                 <Tooltip
                   contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                  formatter={(value: number) => [`${value} ${mode === 'quantity' ? 'units' : 'SKUs'}`, mode === 'quantity' ? 'Stock-Out Qty' : 'Count']}
+                  formatter={(value: any) => [`${value} ${mode === 'quantity' ? 'units' : 'SKUs'}`, mode === 'quantity' ? 'Stock-Out Qty' : 'Count']}
                 />
                 <Legend layout="vertical" verticalAlign="middle" align="right" wrapperStyle={{ fontSize: '12px' }} />
               </PieChart>
