@@ -1,0 +1,302 @@
+'use client';
+
+import { useState, useCallback } from 'react';
+import { parseExcelFile, exportToExcel, exportReport4, exportBreakdownReport } from '@/lib/excelUtils';
+import { generateReport1, generateReport2, generateReport3, generateReport4, generateBreakdownReport, findMissingMerchantSkus, OrderRow, MissingMerchantSku } from '@/lib/analysis';
+import FileUpload from '@/components/FileUpload';
+import ReportDisplay from '@/components/ReportDisplay';
+
+export default function Home() {
+  const [orders, setOrders] = useState<OrderRow[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [report1, setReport1] = useState<any[]>([]);
+  const [report2, setReport2] = useState<any[]>([]);
+  const [report3, setReport3] = useState<Record<string, any[]>>({});
+  const [report4, setReport4] = useState<{ summary: any[]; detailed: any[] } | null>(null);
+  const [breakdownReport, setBreakdownReport] = useState<any[]>([]);
+  const [missingMerchantSkus, setMissingMerchantSkus] = useState<MissingMerchantSku[]>([]);
+
+  const handleFileUpload = useCallback(async (file: File) => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const parsedOrders = await parseExcelFile(file);
+      setOrders(parsedOrders);
+      
+      // Generate all reports
+      const r1 = generateReport1(parsedOrders);
+      const r2 = generateReport2(parsedOrders);
+      const r3 = generateReport3(parsedOrders);
+      const r4 = generateReport4(parsedOrders);
+      const breakdown = generateBreakdownReport(parsedOrders);
+      const missing = findMissingMerchantSkus(parsedOrders);
+      
+      setReport1(r1);
+      setReport2(r2);
+      setReport3(r3);
+      setReport4(r4);
+      setBreakdownReport(breakdown);
+      setMissingMerchantSkus(missing);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to process file');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const handleExportReport1 = () => {
+    if (report1.length > 0) {
+      exportToExcel(report1, 'report1_all_marketplace_excluding_canceled.xlsx');
+    }
+  };
+
+  const handleExportReport2 = () => {
+    if (report2.length > 0) {
+      exportToExcel(report2, 'report2_all_marketplace_completed.xlsx');
+    }
+  };
+
+  const handleExportReport3 = (marketplace: string) => {
+    if (report3[marketplace] && report3[marketplace].length > 0) {
+      exportToExcel(report3[marketplace], `report3_${marketplace.toLowerCase()}_all_status.xlsx`);
+    }
+  };
+
+  const handleExportReport4 = () => {
+    if (report4) {
+      exportReport4(report4.summary, report4.detailed, 'report4_detailed_by_marketplace.xlsx');
+    }
+  };
+
+  const handleExportBreakdown = () => {
+    if (breakdownReport.length > 0) {
+      exportBreakdownReport(breakdownReport, 'breakdown_report_by_marketplace_and_merchant_sku.xlsx');
+    }
+  };
+
+  const handleExportMissingSkus = () => {
+    if (missingMerchantSkus.length > 0) {
+      exportToExcel(missingMerchantSkus, 'missing_merchant_skus.xlsx');
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50 py-8 px-4">
+      <div className="max-w-7xl mx-auto">
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">Stock-Out Tracker</h1>
+        <p className="text-gray-600 mb-8">Upload your orders Excel file to generate stock-out reports</p>
+
+        <FileUpload onFileUpload={handleFileUpload} loading={loading} />
+
+        {error && (
+          <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
+            {error}
+          </div>
+        )}
+
+        {orders.length > 0 && (
+          <div className="mt-8">
+            <div className="bg-white rounded-lg shadow p-4 mb-4">
+              <p className="text-sm text-gray-600">
+                Loaded <span className="font-semibold">{orders.length}</span> orders
+              </p>
+            </div>
+
+            <div className="space-y-6">
+              {/* Report 1 */}
+              <ReportDisplay
+                title="Report 1: All Marketplace (Excluding Canceled/Cancelled)"
+                data={report1}
+                onExport={handleExportReport1}
+              />
+
+              {/* Report 2 */}
+              <ReportDisplay
+                title="Report 2: All Marketplace (Status = Completed)"
+                data={report2}
+                onExport={handleExportReport2}
+              />
+
+              {/* Report 3 */}
+              <div className="bg-white rounded-lg shadow p-6">
+                <h2 className="text-xl font-semibold mb-4">Report 3: Grouped by Marketplace</h2>
+                <div className="space-y-4">
+                  {Object.entries(report3).map(([marketplace, data]) => (
+                    <div key={marketplace} className="border rounded-lg p-4">
+                      <div className="flex justify-between items-center mb-2">
+                        <h3 className="font-semibold">{marketplace}</h3>
+                        <button
+                          onClick={() => handleExportReport3(marketplace)}
+                          className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+                        >
+                          Export
+                        </button>
+                      </div>
+                      <ReportDisplay
+                        title=""
+                        data={data}
+                        onExport={() => {}}
+                        hideExportButton
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Report 4 */}
+              {report4 && (
+                <div className="bg-white rounded-lg shadow p-6">
+                  <div className="flex justify-between items-center mb-4">
+                    <h2 className="text-xl font-semibold">Report 4: Detailed Stock-Out by Marketplace</h2>
+                    <button
+                      onClick={handleExportReport4}
+                      className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+                    >
+                      Export
+                    </button>
+                  </div>
+                  <div className="space-y-4">
+                    <div>
+                      <h3 className="font-semibold mb-2">Summary by Marketplace</h3>
+                      <div className="overflow-x-auto">
+                        <table className="min-w-full divide-y divide-gray-200">
+                          <thead className="bg-gray-50">
+                            <tr>
+                              <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Marketplace</th>
+                              <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Merchant SKU</th>
+                              <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Stock-Out Quantity</th>
+                            </tr>
+                          </thead>
+                          <tbody className="bg-white divide-y divide-gray-200">
+                            {report4.summary.slice(0, 20).map((row, idx) => (
+                              <tr key={idx}>
+                                <td className="px-4 py-2 text-sm">{row.marketplace}</td>
+                                <td className="px-4 py-2 text-sm">{row.merchant_sku}</td>
+                                <td className="px-4 py-2 text-sm font-semibold">{row.stock_out_quantity}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                      {report4.summary.length > 20 && (
+                        <p className="text-sm text-gray-500 mt-2">
+                          Showing first 20 of {report4.summary.length} records. Export to see all.
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Breakdown Report */}
+              {breakdownReport.length > 0 && (
+                <div className="bg-white rounded-lg shadow p-6">
+                  <div className="flex justify-between items-center mb-4">
+                    <h2 className="text-xl font-semibold">Breakdown Report: By Marketplace and Merchant SKU</h2>
+                    <button
+                      onClick={handleExportBreakdown}
+                      className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+                    >
+                      Export
+                    </button>
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full divide-y divide-gray-200">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Marketplace
+                          </th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Merchant SKU (Order Item)
+                          </th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Order Quantity
+                          </th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Merchandise SKU (Component/Tracked Item)
+                          </th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Merchandise Quantity per Order Item
+                          </th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Total Merchandise Quantity
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="bg-white divide-y divide-gray-200">
+                        {breakdownReport.slice(0, 50).map((row, idx) => (
+                          <tr key={idx} className="hover:bg-gray-50">
+                            <td className="px-4 py-3 text-sm text-gray-900">{row.marketplace}</td>
+                            <td className="px-4 py-3 text-sm font-medium text-gray-900">{row.merchant_sku_order_item}</td>
+                            <td className="px-4 py-3 text-sm text-gray-900">{row.order_quantity}</td>
+                            <td className="px-4 py-3 text-sm text-gray-900">{row.merchandise_sku_component}</td>
+                            <td className="px-4 py-3 text-sm text-gray-900">{row.merchandise_quantity_per_order_item}</td>
+                            <td className="px-4 py-3 text-sm font-semibold text-gray-900">{row.total_merchandise_quantity}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  {breakdownReport.length > 50 && (
+                    <p className="text-sm text-gray-500 mt-4">
+                      Showing first 50 of {breakdownReport.length} records. Export to see all.
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {/* Missing Merchant SKUs Report */}
+              {missingMerchantSkus.length > 0 && (
+                <div className="bg-white rounded-lg shadow p-6 border-2 border-yellow-300">
+                  <div className="flex justify-between items-center mb-4">
+                    <div>
+                      <h2 className="text-xl font-semibold text-yellow-800">⚠️ Missing Merchant SKUs</h2>
+                      <p className="text-sm text-gray-600 mt-1">
+                        Merchant SKUs from TikTok, Shopee, and Lazada orders that are not yet hardcoded in the reference files
+                      </p>
+                    </div>
+                    <button
+                      onClick={handleExportMissingSkus}
+                      className="px-4 py-2 bg-yellow-600 text-white rounded hover:bg-yellow-700"
+                    >
+                      Export to Excel
+                    </button>
+                  </div>
+                  <div className="mb-4 text-sm text-gray-600">
+                    <p>Total Missing Merchant SKUs: <span className="font-semibold">{missingMerchantSkus.length}</span></p>
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full divide-y divide-gray-200">
+                      <thead className="bg-yellow-50">
+                        <tr>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Marketplace
+                          </th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Merchant SKU
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="bg-white divide-y divide-gray-200">
+                        {missingMerchantSkus.map((item, idx) => (
+                          <tr key={idx} className="hover:bg-yellow-50">
+                            <td className="px-4 py-3 text-sm font-medium text-gray-900">{item.marketplace}</td>
+                            <td className="px-4 py-3 text-sm text-gray-900">{item.merchant_sku}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
