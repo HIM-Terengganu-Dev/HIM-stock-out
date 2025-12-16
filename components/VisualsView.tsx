@@ -143,12 +143,14 @@ export default function VisualsView({
                   cy="50%"
                   labelLine={false}
                   label={({ cx, cy, midAngle, innerRadius, outerRadius, percent }) => {
+                    const rMidAngle = midAngle || 0;
+                    const rPercent = percent || 0;
                     const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
-                    const x = cx + radius * Math.cos(-midAngle * Math.PI / 180);
-                    const y = cy + radius * Math.sin(-midAngle * Math.PI / 180);
-                    return percent > 0.05 ? (
+                    const x = cx + radius * Math.cos(-rMidAngle * Math.PI / 180);
+                    const y = cy + radius * Math.sin(-rMidAngle * Math.PI / 180);
+                    return rPercent > 0.05 ? (
                       <text x={x} y={y} fill="white" textAnchor={x > cx ? 'start' : 'end'} dominantBaseline="central">
-                        {`${(percent * 100).toFixed(0)}%`}
+                        {`${(rPercent * 100).toFixed(0)}%`}
                       </text>
                     ) : null;
                   }}
