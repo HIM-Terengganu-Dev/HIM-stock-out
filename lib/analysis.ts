@@ -345,7 +345,10 @@ export function findMissingMerchantSkus(orders: OrderRow[]): MissingMerchantSku[
   // Find SKUs that are NOT in the hardcoded references
   const missingSkus: MissingMerchantSku[] = [];
   
-  for (const key of marketplaceSkuSet) {
+  // Convert Set to Array for iteration
+  const marketplaceSkuArray = Array.from(marketplaceSkuSet);
+  
+  for (const key of marketplaceSkuArray) {
     const [marketplace, merchantSku] = key.split('|');
     
     // Check if SKU is in comboSkus
