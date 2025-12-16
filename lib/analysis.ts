@@ -38,6 +38,40 @@ export interface BreakdownRecord {
 const TARGET_MARKETPLACES = ['TikTok', 'Shopee', 'Lazada'];
 const CANCELED_STATUSES = ['Canceled', 'Cancelled', 'Cancellation'];
 
+// Product category sort order
+const PRODUCT_CATEGORY_ORDER = [
+  'Spray Up',
+  'HIM Coffee',
+  'HER Coffee',
+  'Vigomax',
+  'HIM Coffee Trial Pack',
+  'HER Coffee Trial Pack',
+  'HER Bliss',
+  'Other Categories'
+];
+
+// Helper function to get sort order for product category
+function getProductCategorySortOrder(category: string | undefined): number {
+  if (!category) return PRODUCT_CATEGORY_ORDER.length; // Put undefined at the end
+  const index = PRODUCT_CATEGORY_ORDER.indexOf(category);
+  return index === -1 ? PRODUCT_CATEGORY_ORDER.length - 1 : index; // "Other Categories" or undefined at end
+}
+
+// Sort function for reports (by product category, then by stock-out quantity descending)
+export function sortByProductCategory<T extends { product_category?: string; stock_out_quantity: number }>(items: T[]): T[] {
+  return items.sort((a, b) => {
+    const categoryOrderA = getProductCategorySortOrder(a.product_category);
+    const categoryOrderB = getProductCategorySortOrder(b.product_category);
+    
+    if (categoryOrderA !== categoryOrderB) {
+      return categoryOrderA - categoryOrderB;
+    }
+    
+    // If same category, sort by stock-out quantity descending
+    return b.stock_out_quantity - a.stock_out_quantity;
+  });
+}
+
 // Helper function to parse date from various formats
 function parseDate(dateValue: any): Date | null {
   if (!dateValue) return null;
@@ -171,13 +205,14 @@ export function generateReport1(orders: OrderRow[]): StockOutQuantity[] {
   );
   const quantities = calculateStockOutQuantities(excludingCanceled);
   
-  return Object.entries(quantities)
+  const report = Object.entries(quantities)
     .map(([merchant_sku, stock_out_quantity]) => ({ 
       merchant_sku, 
       product_category: getProductCategory(merchant_sku),
       stock_out_quantity 
-    }))
-    .sort((a, b) => b.stock_out_quantity - a.stock_out_quantity);
+    }));
+  
+  return sortByProductCategory(report);
 }
 
 export function generateReport2(orders: OrderRow[]): StockOutQuantity[] {
@@ -185,13 +220,14 @@ export function generateReport2(orders: OrderRow[]): StockOutQuantity[] {
   const completed = filtered.filter(order => order['Marketplace Status'] === 'Completed');
   const quantities = calculateStockOutQuantities(completed);
   
-  return Object.entries(quantities)
+  const report = Object.entries(quantities)
     .map(([merchant_sku, stock_out_quantity]) => ({ 
       merchant_sku, 
       product_category: getProductCategory(merchant_sku),
       stock_out_quantity 
-    }))
-    .sort((a, b) => b.stock_out_quantity - a.stock_out_quantity);
+    }));
+  
+  return sortByProductCategory(report);
 }
 
 export function generateReport3(orders: OrderRow[]): Record<string, StockOutQuantity[]> {
@@ -206,13 +242,14 @@ export function generateReport3(orders: OrderRow[]): Record<string, StockOutQuan
     const marketplaceOrders = excludingCanceled.filter(order => order['Marketplace'] === marketplace);
     const quantities = calculateStockOutQuantities(marketplaceOrders);
     
-    reports[marketplace] = Object.entries(quantities)
+    const report = Object.entries(quantities)
       .map(([merchant_sku, stock_out_quantity]) => ({ 
         merchant_sku, 
         product_category: getProductCategory(merchant_sku),
         stock_out_quantity 
-      }))
-      .sort((a, b) => b.stock_out_quantity - a.stock_out_quantity);
+      }));
+    
+    reports[marketplace] = sortByProductCategory(report);
   }
   
   return reports;
@@ -305,6 +342,12 @@ export function generateReport4(orders: OrderRow[]): {
     .sort((a, b) => {
       if (a.marketplace !== b.marketplace) {
         return a.marketplace.localeCompare(b.marketplace);
+      }
+      // Within same marketplace, sort by product category
+      const categoryOrderA = getProductCategorySortOrder(a.product_category);
+      const categoryOrderB = getProductCategorySortOrder(b.product_category);
+      if (categoryOrderA !== categoryOrderB) {
+        return categoryOrderA - categoryOrderB;
       }
       return b.stock_out_quantity - a.stock_out_quantity;
     });
