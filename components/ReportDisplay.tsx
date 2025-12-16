@@ -2,12 +2,13 @@
 
 interface ReportDisplayProps {
   title: string;
+  dateRange?: string;
   data: Array<{ merchant_sku: string; product_category?: string; stock_out_quantity: number }>;
   onExport: () => void;
   hideExportButton?: boolean;
 }
 
-export default function ReportDisplay({ title, data, onExport, hideExportButton = false }: ReportDisplayProps) {
+export default function ReportDisplay({ title, dateRange, data, onExport, hideExportButton = false }: ReportDisplayProps) {
   if (data.length === 0) {
     return null;
   }
@@ -18,7 +19,12 @@ export default function ReportDisplay({ title, data, onExport, hideExportButton 
     <div className="bg-white rounded-lg shadow p-6">
       {title && (
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-semibold">{title}</h2>
+          <div>
+            <h2 className="text-xl font-semibold">{title}</h2>
+            {dateRange && (
+              <p className="text-sm text-gray-500 mt-1">Date Range: {dateRange}</p>
+            )}
+          </div>
           {!hideExportButton && (
             <button
               onClick={onExport}

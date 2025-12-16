@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from 'react';
 import { parseExcelFile, exportToExcel, exportReport4, exportBreakdownReport, exportMissingMerchantSkus } from '@/lib/excelUtils';
-import { generateReport1, generateReport2, generateReport3, generateReport4, generateBreakdownReport, findMissingMerchantSkus, OrderRow, MissingMerchantSku } from '@/lib/analysis';
+import { generateReport1, generateReport2, generateReport3, generateReport4, generateBreakdownReport, findMissingMerchantSkus, getDateRange, OrderRow, MissingMerchantSku } from '@/lib/analysis';
 import FileUpload from '@/components/FileUpload';
 import ReportDisplay from '@/components/ReportDisplay';
 
@@ -16,6 +16,70 @@ export default function Home() {
   const [report4, setReport4] = useState<{ summary: any[]; detailed: any[] } | null>(null);
   const [breakdownReport, setBreakdownReport] = useState<any[]>([]);
   const [missingMerchantSkus, setMissingMerchantSkus] = useState<MissingMerchantSku[]>([]);
+  const [filteredOrders, setFilteredOrders] = useState<OrderRow[]>([]);
+
+  // Helper function to get date range for Report 1 (excluding canceled)
+  const getReport1DateRange = () => {
+    const TARGET_MARKETPLACES = ['TikTok', 'Shopee', 'Lazada'];
+    const CANCELED_STATUSES = ['Canceled', 'Cancelled', 'Cancellation'];
+    const filtered = filteredOrders.filter(order => 
+      TARGET_MARKETPLACES.includes(order['Marketplace'] || '')
+    );
+    const excludingCanceled = filtered.filter(order => 
+      !CANCELED_STATUSES.includes(order['Marketplace Status'] || '')
+    );
+    return getDateRange(excludingCanceled);
+  };
+
+  // Helper function to get date range for Report 2 (completed only)
+  const getReport2DateRange = () => {
+    const TARGET_MARKETPLACES = ['TikTok', 'Shopee', 'Lazada'];
+    const filtered = filteredOrders.filter(order => 
+      TARGET_MARKETPLACES.includes(order['Marketplace'] || '')
+    );
+    const completed = filtered.filter(order => order['Marketplace Status'] === 'Completed');
+    return getDateRange(completed);
+  };
+
+  // Helper function to get date range for Report 3 (by marketplace, excluding canceled)
+  const getReport3DateRange = (marketplace: string) => {
+    const CANCELED_STATUSES = ['Canceled', 'Cancelled', 'Cancellation'];
+    const TARGET_MARKETPLACES = ['TikTok', 'Shopee', 'Lazada'];
+    const filtered = filteredOrders.filter(order => 
+      TARGET_MARKETPLACES.includes(order['Marketplace'] || '')
+    );
+    const excludingCanceled = filtered.filter(order => 
+      !CANCELED_STATUSES.includes(order['Marketplace Status'] || '')
+    );
+    const marketplaceOrders = excludingCanceled.filter(order => order['Marketplace'] === marketplace);
+    return getDateRange(marketplaceOrders);
+  };
+
+  // Helper function to get date range for Report 4 (excluding canceled)
+  const getReport4DateRange = () => {
+    const TARGET_MARKETPLACES = ['TikTok', 'Shopee', 'Lazada'];
+    const CANCELED_STATUSES = ['Canceled', 'Cancelled', 'Cancellation'];
+    const filtered = filteredOrders.filter(order => 
+      TARGET_MARKETPLACES.includes(order['Marketplace'] || '')
+    );
+    const excludingCanceled = filtered.filter(order => 
+      !CANCELED_STATUSES.includes(order['Marketplace Status'] || '')
+    );
+    return getDateRange(excludingCanceled);
+  };
+
+  // Helper function to get date range for Breakdown Report (excluding canceled)
+  const getBreakdownDateRange = () => {
+    const TARGET_MARKETPLACES = ['TikTok', 'Shopee', 'Lazada'];
+    const CANCELED_STATUSES = ['Canceled', 'Cancelled', 'Cancellation'];
+    const filtered = filteredOrders.filter(order => 
+      TARGET_MARKETPLACES.includes(order['Marketplace'] || '')
+    );
+    const excludingCanceled = filtered.filter(order => 
+      !CANCELED_STATUSES.includes(order['Marketplace Status'] || '')
+    );
+    return getDateRange(excludingCanceled);
+  };
 
   const handleFileUpload = useCallback(async (file: File) => {
     setLoading(true);
@@ -24,6 +88,7 @@ export default function Home() {
     try {
       const parsedOrders = await parseExcelFile(file);
       setOrders(parsedOrders);
+      setFilteredOrders(parsedOrders);
       
       // Generate all reports
       const r1 = generateReport1(parsedOrders);
@@ -108,6 +173,7 @@ export default function Home() {
               {/* Report 1 */}
               <ReportDisplay
                 title="Report 1: All Marketplace (Excluding Canceled/Cancelled)"
+                dateRange={getReport1DateRange()}
                 data={report1}
                 onExport={handleExportReport1}
               />
@@ -115,18 +181,29 @@ export default function Home() {
               {/* Report 2 */}
               <ReportDisplay
                 title="Report 2: All Marketplace (Status = Completed)"
+                dateRange={getReport2DateRange()}
                 data={report2}
                 onExport={handleExportReport2}
               />
 
               {/* Report 3 */}
               <div className="bg-white rounded-lg shadow p-6">
-                <h2 className="text-xl font-semibold mb-4">Report 3: Grouped by Marketplace</h2>
+                <div className="mb-4">
+                  <h2 className="text-xl font-semibold">Report 3: Grouped by Marketplace</h2>
+                  {getReport3DateRange(Object.keys(report3)[0] || '') && (
+                    <p className="text-sm text-gray-500 mt-1">Date Range: {getReport3DateRange(Object.keys(report3)[0] || '')}</p>
+                  )}
+                </div>
                 <div className="space-y-4">
                   {Object.entries(report3).map(([marketplace, data]) => (
                     <div key={marketplace} className="border rounded-lg p-4">
                       <div className="flex justify-between items-center mb-2">
-                        <h3 className="font-semibold">{marketplace}</h3>
+                        <div>
+                          <h3 className="font-semibold">{marketplace}</h3>
+                          {getReport3DateRange(marketplace) && (
+                            <p className="text-xs text-gray-500 mt-1">Date Range: {getReport3DateRange(marketplace)}</p>
+                          )}
+                        </div>
                         <button
                           onClick={() => handleExportReport3(marketplace)}
                           className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
@@ -149,7 +226,12 @@ export default function Home() {
               {report4 && (
                 <div className="bg-white rounded-lg shadow p-6">
                   <div className="flex justify-between items-center mb-4">
-                    <h2 className="text-xl font-semibold">Report 4: Detailed Stock-Out by Marketplace</h2>
+                    <div>
+                      <h2 className="text-xl font-semibold">Report 4: Detailed Stock-Out by Marketplace</h2>
+                      {getReport4DateRange() && (
+                        <p className="text-sm text-gray-500 mt-1">Date Range: {getReport4DateRange()}</p>
+                      )}
+                    </div>
                     <button
                       onClick={handleExportReport4}
                       className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
@@ -196,7 +278,12 @@ export default function Home() {
               {breakdownReport.length > 0 && (
                 <div className="bg-white rounded-lg shadow p-6">
                   <div className="flex justify-between items-center mb-4">
-                    <h2 className="text-xl font-semibold">Breakdown Report: By Marketplace and Merchant SKU</h2>
+                    <div>
+                      <h2 className="text-xl font-semibold">Breakdown Report: By Marketplace and Merchant SKU</h2>
+                      {getBreakdownDateRange() && (
+                        <p className="text-sm text-gray-500 mt-1">Date Range: {getBreakdownDateRange()}</p>
+                      )}
+                    </div>
                     <button
                       onClick={handleExportBreakdown}
                       className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"

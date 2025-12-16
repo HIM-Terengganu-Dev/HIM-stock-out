@@ -38,6 +38,92 @@ export interface BreakdownRecord {
 const TARGET_MARKETPLACES = ['TikTok', 'Shopee', 'Lazada'];
 const CANCELED_STATUSES = ['Canceled', 'Cancelled', 'Cancellation'];
 
+// Helper function to parse date from various formats
+function parseDate(dateValue: any): Date | null {
+  if (!dateValue) return null;
+  
+  // If it's already a Date object
+  if (dateValue instanceof Date) {
+    return isNaN(dateValue.getTime()) ? null : dateValue;
+  }
+  
+  // If it's a number (Excel serial date)
+  if (typeof dateValue === 'number') {
+    // Excel dates are days since 1900-01-01
+    const excelEpoch = new Date(1899, 11, 30);
+    const date = new Date(excelEpoch.getTime() + dateValue * 24 * 60 * 60 * 1000);
+    return isNaN(date.getTime()) ? null : date;
+  }
+  
+  // If it's a string, try to parse it
+  if (typeof dateValue === 'string') {
+    const date = new Date(dateValue);
+    return isNaN(date.getTime()) ? null : date;
+  }
+  
+  return null;
+}
+
+// Helper function to extract date range from orders
+export function getDateRange(orders: OrderRow[]): string {
+  if (orders.length === 0) return '';
+  
+  const dates: Date[] = [];
+  
+  // Try common date column names (checking various possible formats)
+  const dateColumnNames = [
+    'Order Time', 
+    'Order Date', 
+    'Date', 
+    'Order Date Time', 
+    'Created At', 
+    'Created Date',
+    'Order Time (UTC)',
+    'Order Date (UTC)',
+    'Order Created Date',
+    'Order Created Time'
+  ];
+  
+  // Find the date column name (case-insensitive)
+  let foundDateColumn: string | null = null;
+  if (orders.length > 0) {
+    const orderKeys = Object.keys(orders[0]);
+    for (const colName of dateColumnNames) {
+      const foundKey = orderKeys.find(key => key.toLowerCase() === colName.toLowerCase());
+      if (foundKey) {
+        foundDateColumn = foundKey;
+        break;
+      }
+    }
+  }
+  
+  // Extract dates using the found column
+  if (foundDateColumn) {
+    for (const order of orders) {
+      const dateValue = order[foundDateColumn];
+      const parsedDate = parseDate(dateValue);
+      if (parsedDate) {
+        dates.push(parsedDate);
+      }
+    }
+  }
+  
+  if (dates.length === 0) return '';
+  
+  const minDate = new Date(Math.min(...dates.map(d => d.getTime())));
+  const maxDate = new Date(Math.max(...dates.map(d => d.getTime())));
+  
+  const formatDate = (date: Date) => {
+    return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+  };
+  
+  if (minDate.getTime() === maxDate.getTime()) {
+    return formatDate(minDate);
+  }
+  
+  return `${formatDate(minDate)} - ${formatDate(maxDate)}`;
+}
+
 export function filterOrders(orders: OrderRow[]): OrderRow[] {
   return orders.filter(order => 
     TARGET_MARKETPLACES.includes(order['Marketplace'] || '')
