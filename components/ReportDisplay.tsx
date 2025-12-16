@@ -2,7 +2,7 @@
 
 interface ReportDisplayProps {
   title: string;
-  data: Array<{ merchant_sku: string; stock_out_quantity: number }>;
+  data: Array<{ merchant_sku: string; product_category?: string; stock_out_quantity: number }>;
   onExport: () => void;
   hideExportButton?: boolean;
 }
@@ -43,6 +43,9 @@ export default function ReportDisplay({ title, data, onExport, hideExportButton 
                 Merchant SKU
               </th>
               <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Product Category
+              </th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Stock-Out Quantity
               </th>
             </tr>
@@ -52,6 +55,9 @@ export default function ReportDisplay({ title, data, onExport, hideExportButton 
               <tr key={idx} className="hover:bg-gray-50">
                 <td className="px-4 py-3 text-sm font-medium text-gray-900">
                   {item.merchant_sku}
+                </td>
+                <td className="px-4 py-3 text-sm text-gray-600">
+                  {item.product_category || '-'}
                 </td>
                 <td className="px-4 py-3 text-sm font-semibold text-gray-900">
                   {item.stock_out_quantity.toLocaleString()}

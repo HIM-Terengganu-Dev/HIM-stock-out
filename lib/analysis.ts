@@ -1,4 +1,4 @@
-import { comboSkus, singleSkus } from './merchantSkuReference';
+import { comboSkus, singleSkus, getProductCategory } from './merchantSkuReference';
 
 export interface OrderRow {
   [key: string]: any;
@@ -11,12 +11,14 @@ export interface OrderRow {
 
 export interface StockOutQuantity {
   merchant_sku: string;
+  product_category?: string;
   stock_out_quantity: number;
 }
 
 export interface DetailedRecord {
   marketplace: string;
   merchant_sku: string;
+  product_category?: string;
   stock_out_quantity: number;
   order_merchant_sku: string;
   order_quantity: number;
@@ -28,6 +30,7 @@ export interface BreakdownRecord {
   merchant_sku_order_item: string;
   order_quantity: number;
   merchandise_sku_component: string;
+  product_category?: string;
   merchandise_quantity_per_order_item: number;
   total_merchandise_quantity: number;
 }
@@ -83,7 +86,11 @@ export function generateReport1(orders: OrderRow[]): StockOutQuantity[] {
   const quantities = calculateStockOutQuantities(excludingCanceled);
   
   return Object.entries(quantities)
-    .map(([merchant_sku, stock_out_quantity]) => ({ merchant_sku, stock_out_quantity }))
+    .map(([merchant_sku, stock_out_quantity]) => ({ 
+      merchant_sku, 
+      product_category: getProductCategory(merchant_sku),
+      stock_out_quantity 
+    }))
     .sort((a, b) => b.stock_out_quantity - a.stock_out_quantity);
 }
 
@@ -93,7 +100,11 @@ export function generateReport2(orders: OrderRow[]): StockOutQuantity[] {
   const quantities = calculateStockOutQuantities(completed);
   
   return Object.entries(quantities)
-    .map(([merchant_sku, stock_out_quantity]) => ({ merchant_sku, stock_out_quantity }))
+    .map(([merchant_sku, stock_out_quantity]) => ({ 
+      merchant_sku, 
+      product_category: getProductCategory(merchant_sku),
+      stock_out_quantity 
+    }))
     .sort((a, b) => b.stock_out_quantity - a.stock_out_quantity);
 }
 
@@ -110,7 +121,11 @@ export function generateReport3(orders: OrderRow[]): Record<string, StockOutQuan
     const quantities = calculateStockOutQuantities(marketplaceOrders);
     
     reports[marketplace] = Object.entries(quantities)
-      .map(([merchant_sku, stock_out_quantity]) => ({ merchant_sku, stock_out_quantity }))
+      .map(([merchant_sku, stock_out_quantity]) => ({ 
+        merchant_sku, 
+        product_category: getProductCategory(merchant_sku),
+        stock_out_quantity 
+      }))
       .sort((a, b) => b.stock_out_quantity - a.stock_out_quantity);
   }
   
@@ -118,7 +133,7 @@ export function generateReport3(orders: OrderRow[]): Record<string, StockOutQuan
 }
 
 export function generateReport4(orders: OrderRow[]): {
-  summary: Array<{ marketplace: string; merchant_sku: string; stock_out_quantity: number }>;
+  summary: Array<{ marketplace: string; merchant_sku: string; product_category?: string; stock_out_quantity: number }>;
   detailed: DetailedRecord[];
 } {
   const filtered = filterOrders(orders);
@@ -149,6 +164,7 @@ export function generateReport4(orders: OrderRow[]): {
           detailedRecords.push({
             marketplace,
             merchant_sku: componentSku,
+            product_category: getProductCategory(componentSku),
             stock_out_quantity: totalQty,
             order_merchant_sku: merchantSku,
             order_quantity: orderQty,
@@ -161,6 +177,7 @@ export function generateReport4(orders: OrderRow[]): {
         detailedRecords.push({
           marketplace,
           merchant_sku: merchantSku,
+          product_category: getProductCategory(merchantSku),
           stock_out_quantity: orderQty,
           order_merchant_sku: merchantSku,
           order_quantity: orderQty,
@@ -172,6 +189,7 @@ export function generateReport4(orders: OrderRow[]): {
         detailedRecords.push({
           marketplace,
           merchant_sku: merchantSku,
+          product_category: getProductCategory(merchantSku),
           stock_out_quantity: orderQty,
           order_merchant_sku: merchantSku,
           order_quantity: orderQty,
@@ -191,7 +209,12 @@ export function generateReport4(orders: OrderRow[]): {
   const summary = Object.entries(summaryMap)
     .map(([key, stock_out_quantity]) => {
       const [marketplace, merchant_sku] = key.split('|');
-      return { marketplace, merchant_sku, stock_out_quantity };
+      return { 
+        marketplace, 
+        merchant_sku, 
+        product_category: getProductCategory(merchant_sku),
+        stock_out_quantity 
+      };
     })
     .sort((a, b) => {
       if (a.marketplace !== b.marketplace) {
@@ -303,6 +326,7 @@ export function generateBreakdownReport(orders: OrderRow[]): BreakdownRecord[] {
       merchant_sku_order_item: record.merchant_sku_order_item,
       order_quantity: record.order_quantity_sum,
       merchandise_sku_component: record.merchandise_sku_component,
+      product_category: getProductCategory(record.merchandise_sku_component),
       merchandise_quantity_per_order_item: record.merchandise_quantity_per_order_item,
       total_merchandise_quantity: record.total_merchandise_quantity
     });

@@ -34,7 +34,7 @@ export function exportToExcel(data: StockOutQuantity[], filename: string): void 
   saveAs(blob, filename);
 }
 
-export function exportReport4(summary: Array<{ marketplace: string; merchant_sku: string; stock_out_quantity: number }>, detailed: DetailedRecord[], filename: string): void {
+export function exportReport4(summary: Array<{ marketplace: string; merchant_sku: string; product_category?: string; stock_out_quantity: number }>, detailed: DetailedRecord[], filename: string): void {
   const workbook = XLSX.utils.book_new();
   
   // Summary sheet

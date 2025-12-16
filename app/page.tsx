@@ -166,6 +166,7 @@ export default function Home() {
                             <tr>
                               <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Marketplace</th>
                               <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Merchant SKU</th>
+                              <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Product Category</th>
                               <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Stock-Out Quantity</th>
                             </tr>
                           </thead>
@@ -174,6 +175,7 @@ export default function Home() {
                               <tr key={idx}>
                                 <td className="px-4 py-2 text-sm">{row.marketplace}</td>
                                 <td className="px-4 py-2 text-sm">{row.merchant_sku}</td>
+                                <td className="px-4 py-2 text-sm text-gray-600">{row.product_category || '-'}</td>
                                 <td className="px-4 py-2 text-sm font-semibold">{row.stock_out_quantity}</td>
                               </tr>
                             ))}
@@ -219,6 +221,9 @@ export default function Home() {
                             Merchandise SKU (Component/Tracked Item)
                           </th>
                           <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Product Category
+                          </th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                             Merchandise Quantity per Order Item
                           </th>
                           <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -233,6 +238,7 @@ export default function Home() {
                             <td className="px-4 py-3 text-sm font-medium text-gray-900">{row.merchant_sku_order_item}</td>
                             <td className="px-4 py-3 text-sm text-gray-900">{row.order_quantity}</td>
                             <td className="px-4 py-3 text-sm text-gray-900">{row.merchandise_sku_component}</td>
+                            <td className="px-4 py-3 text-sm text-gray-600">{row.product_category || '-'}</td>
                             <td className="px-4 py-3 text-sm text-gray-900">{row.merchandise_quantity_per_order_item}</td>
                             <td className="px-4 py-3 text-sm font-semibold text-gray-900">{row.total_merchandise_quantity}</td>
                           </tr>

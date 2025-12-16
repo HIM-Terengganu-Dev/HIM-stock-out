@@ -165,4 +165,27 @@ export const singleSkus: Set<string> = new Set([
   "spr/x1"
 ]);
 
+// Product category mapping for single SKUs
+export const singleSkuProductCategories: Record<string, string> = {
+  "COF1": "HIM Coffee",
+  "COFCUP-V1": "Coffee Cup",
+  "COFFEE CUP V1": "Coffee Cup",
+  "HBLISS": "HER Bliss",
+  "HERCOF1": "HER Coffee",
+  "SHAKER": "Shaker",
+  "TP-COF": "HIM Coffee Trial Pack",
+  "TP-HERCOF": "HER Coffee Trial Pack",
+  "TUMB-V2-BLACK": "Tumbler",
+  "TUMB-V2-GOLD": "Tumbler",
+  "VGOMX": "Vigomax",
+  "buku/BK": "Buku",
+  "buku/SM": "Buku",
+  "spr/x1": "Spray Up"
+};
+
+// Helper function to get product category for a merchant SKU
+export function getProductCategory(merchantSku: string): string | undefined {
+  return singleSkuProductCategories[merchantSku];
+}
+
 
