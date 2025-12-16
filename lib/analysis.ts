@@ -328,8 +328,8 @@ export interface MissingMerchantSku {
 export function findMissingMerchantSkus(orders: OrderRow[]): MissingMerchantSku[] {
   const filtered = filterOrders(orders);
   
-  // Get all unique merchant SKUs from TikTok, Shopee, Lazada orders
-  const merchantSkuMap = new Map<string, string>(); // merchant_sku -> marketplace
+  // Get all unique marketplace-SKU combinations from TikTok, Shopee, Lazada orders
+  const marketplaceSkuSet = new Set<string>(); // "marketplace|merchant_sku"
   
   for (const order of filtered) {
     const merchantSku = order['Merchant SKU'];
@@ -337,16 +337,17 @@ export function findMissingMerchantSkus(orders: OrderRow[]): MissingMerchantSku[
     
     if (!merchantSku || !marketplace) continue;
     
-    // Store the first marketplace we see for this SKU (or we could collect all)
-    if (!merchantSkuMap.has(merchantSku)) {
-      merchantSkuMap.set(merchantSku, marketplace);
-    }
+    // Store all unique marketplace-SKU combinations
+    const key = `${marketplace}|${merchantSku}`;
+    marketplaceSkuSet.add(key);
   }
   
   // Find SKUs that are NOT in the hardcoded references
   const missingSkus: MissingMerchantSku[] = [];
   
-  for (const [merchantSku, marketplace] of merchantSkuMap.entries()) {
+  for (const key of marketplaceSkuSet) {
+    const [marketplace, merchantSku] = key.split('|');
+    
     // Check if SKU is in comboSkus
     const isComboSku = merchantSku in comboSkus;
     // Check if SKU is in singleSkus
