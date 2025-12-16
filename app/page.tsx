@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import { parseExcelFile, exportToExcel, exportReport4, exportBreakdownReport } from '@/lib/excelUtils';
+import { parseExcelFile, exportToExcel, exportReport4, exportBreakdownReport, exportMissingMerchantSkus } from '@/lib/excelUtils';
 import { generateReport1, generateReport2, generateReport3, generateReport4, generateBreakdownReport, findMissingMerchantSkus, OrderRow, MissingMerchantSku } from '@/lib/analysis';
 import FileUpload from '@/components/FileUpload';
 import ReportDisplay from '@/components/ReportDisplay';
@@ -78,7 +78,7 @@ export default function Home() {
 
   const handleExportMissingSkus = () => {
     if (missingMerchantSkus.length > 0) {
-      exportToExcel(missingMerchantSkus, 'missing_merchant_skus.xlsx');
+      exportMissingMerchantSkus(missingMerchantSkus, 'missing_merchant_skus.xlsx');
     }
   };
 
