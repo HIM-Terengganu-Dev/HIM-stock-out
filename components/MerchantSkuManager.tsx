@@ -145,7 +145,7 @@ export default function MerchantSkuManager() {
       await loadData();
       setShowSingleForm(false);
       setEditingSingle(null);
-      setSingleForm({ merchant_sku: '', merchant_sku_norm: '', product_category: '', sale_class: '' });
+      setSingleForm({ merchant_sku: '', product_category: '', sale_class: '' });
       setSuccess('Single SKU saved successfully');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to save single SKU');
@@ -201,7 +201,7 @@ export default function MerchantSkuManager() {
       await loadData();
       setShowComboForm(false);
       setEditingCombo(null);
-      setComboForm({ merchant_sku: '', merchant_sku_norm: '', components: [] });
+      setComboForm({ merchant_sku: '', components: [] });
       setSuccess('Combo SKU saved successfully');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to save combo SKU');
