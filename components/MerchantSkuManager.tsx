@@ -274,20 +274,12 @@ export default function MerchantSkuManager() {
         <h2 className="text-2xl font-bold text-gray-900">Merchant SKU Management</h2>
         <div className="flex gap-2">
           <button
-            onClick={handleSyncFromJson}
-            disabled={syncingFromJson || syncing}
-            className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 disabled:bg-gray-400"
-            title="Update database with JSON file (upsert - add/update only, never delete)"
-          >
-            {syncingFromJson ? 'Updating...' : 'Update Database with JSON'}
-          </button>
-          <button
             onClick={handleSync}
             disabled={syncing || syncingFromJson}
             className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-gray-400"
             title="Sync database to JSON file"
           >
-            {syncing ? 'Syncing...' : 'Sync Database to JSON'}
+            {syncing ? 'Syncing...' : 'Sync with Database'}
           </button>
         </div>
       </div>
