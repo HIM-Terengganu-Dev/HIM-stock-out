@@ -1,4 +1,53 @@
-// Hardcoded merchant SKU reference data
+// Merchant SKU reference data loaded from JSON file
+
+// For client-side, we'll use a module-level cache that gets populated
+// For server-side, we load from file system
+let merchantSkusData: any = null;
+let dataLoaded = false;
+
+function loadMerchantSkusData() {
+  if (merchantSkusData && dataLoaded) return merchantSkusData;
+  
+  try {
+    // Server-side: load from file system using dynamic require
+    if (typeof window === 'undefined') {
+      const fs = require('fs');
+      const path = require('path');
+      const filePath = path.join(process.cwd(), 'merchantSkus.json');
+      const fileContent = fs.readFileSync(filePath, 'utf-8');
+      merchantSkusData = JSON.parse(fileContent);
+      dataLoaded = true;
+    } else {
+      // Client-side: use empty structure initially
+      // The data should be loaded via API call in the component
+      if (!merchantSkusData) {
+        merchantSkusData = {
+          comboSkus: {},
+          singleSkus: [],
+          singleSkuProductCategories: {},
+        };
+      }
+    }
+  } catch (error) {
+    console.error('Error loading merchant SKU data:', error);
+    merchantSkusData = {
+      comboSkus: {},
+      singleSkus: [],
+      singleSkuProductCategories: {},
+    };
+  }
+  
+  return merchantSkusData;
+}
+
+// Function to update data from API (for client-side)
+export function updateMerchantSkusData(newData: any) {
+  merchantSkusData = newData;
+  dataLoaded = true;
+}
+
+// Initialize on module load
+const data = loadMerchantSkusData();
 
 export interface Component {
   qty: number;
@@ -19,173 +68,138 @@ export interface SingleSku {
   sale_class: string;
 }
 
-// Combo SKUs with components
-export const comboSkus: Record<string, Component[]> = {
-  "2HIM2SPU": [
-    { qty: 2, component_merchant_sku: "COF1", component_merchant_sku_norm: "COF1" },
-    { qty: 2, component_merchant_sku: "spr/x1", component_merchant_sku_norm: "SPR/X1" }
-  ],
-  "3COF2SPU": [
-    { qty: 3, component_merchant_sku: "COF1", component_merchant_sku_norm: "COF1" },
-    { qty: 2, component_merchant_sku: "spr/x1", component_merchant_sku_norm: "SPR/X1" }
-  ],
-  "3HIM3HER": [
-    { qty: 3, component_merchant_sku: "COF1", component_merchant_sku_norm: "COF1" },
-    { qty: 3, component_merchant_sku: "HERCOF1", component_merchant_sku_norm: "HERCOF1" },
-    { qty: 1, component_merchant_sku: "TP-COF", component_merchant_sku_norm: "TP-COF" },
-    { qty: 1, component_merchant_sku: "TP-HERCOF", component_merchant_sku_norm: "TP-HERCOF" }
-  ],
-  "E-2HERHBLISS": [
-    { qty: 2, component_merchant_sku: "HERCOF1", component_merchant_sku_norm: "HERCOF1" },
-    { qty: 1, component_merchant_sku: "HBLISS", component_merchant_sku_norm: "HBLISS" }
-  ],
-  "E-2HIMSPU": [
-    { qty: 2, component_merchant_sku: "COF1", component_merchant_sku_norm: "COF1" },
-    { qty: 1, component_merchant_sku: "spr/x1", component_merchant_sku_norm: "SPR/X1" }
-  ],
-  "E-2HIMVGO": [
-    { qty: 2, component_merchant_sku: "COF1", component_merchant_sku_norm: "COF1" },
-    { qty: 1, component_merchant_sku: "VGOMX", component_merchant_sku_norm: "VGOMX" }
-  ],
-  "E-3HIM3HER": [
-    { qty: 3, component_merchant_sku: "COF1", component_merchant_sku_norm: "COF1" },
-    { qty: 3, component_merchant_sku: "HERCOF1", component_merchant_sku_norm: "HERCOF1" }
-  ],
-  "E-3HIMSPU": [
-    { qty: 3, component_merchant_sku: "COF1", component_merchant_sku_norm: "COF1" },
-    { qty: 1, component_merchant_sku: "spr/x1", component_merchant_sku_norm: "SPR/X1" }
-  ],
-  "E-HER3CC-V1": [
-    { qty: 3, component_merchant_sku: "HERCOF1", component_merchant_sku_norm: "HERCOF1" },
-    { qty: 1, component_merchant_sku: "COFFEE CUP V1", component_merchant_sku_norm: "COFFEE CUP V1" }
-  ],
-  "E-HER4": [
-    { qty: 4, component_merchant_sku: "HERCOF1", component_merchant_sku_norm: "HERCOF1" }
-  ],
-  "E-HER6": [
-    { qty: 6, component_merchant_sku: "HERCOF1", component_merchant_sku_norm: "HERCOF1" }
-  ],
-  "E-HER8": [
-    { qty: 8, component_merchant_sku: "HERCOF1", component_merchant_sku_norm: "HERCOF1" }
-  ],
-  "E-HIM3CC-V1": [
-    { qty: 3, component_merchant_sku: "COF1", component_merchant_sku_norm: "COF1" },
-    { qty: 1, component_merchant_sku: "COFFEE CUP V1", component_merchant_sku_norm: "COFFEE CUP V1" }
-  ],
-  "E-HIM8": [
-    { qty: 8, component_merchant_sku: "COF1", component_merchant_sku_norm: "COF1" }
-  ],
-  "E-HIMVGO": [
-    { qty: 1, component_merchant_sku: "COF1", component_merchant_sku_norm: "COF1" },
-    { qty: 1, component_merchant_sku: "VGOMX", component_merchant_sku_norm: "VGOMX" }
-  ],
-  "E-SPU2": [
-    { qty: 2, component_merchant_sku: "spr/x1", component_merchant_sku_norm: "SPR/X1" }
-  ],
-  "HER1": [
-    { qty: 1, component_merchant_sku: "HERCOF1", component_merchant_sku_norm: "HERCOF1" }
-  ],
-  "HER3": [
-    { qty: 3, component_merchant_sku: "HERCOF1", component_merchant_sku_norm: "HERCOF1" }
-  ],
-  "HER3LIVE": [
-    { qty: 3, component_merchant_sku: "HERCOF1", component_merchant_sku_norm: "HERCOF1" },
-    { qty: 1, component_merchant_sku: "TP-COF", component_merchant_sku_norm: "TP-COF" },
-    { qty: 1, component_merchant_sku: "TP-HERCOF", component_merchant_sku_norm: "TP-HERCOF" }
-  ],
-  "HER3SHA-V2": [
-    { qty: 3, component_merchant_sku: "HERCOF1", component_merchant_sku_norm: "HERCOF1" },
-    { qty: 1, component_merchant_sku: "SHAKER", component_merchant_sku_norm: "SHAKER" }
-  ],
-  "HER3TP": [
-    { qty: 3, component_merchant_sku: "HERCOF1", component_merchant_sku_norm: "HERCOF1" },
-    { qty: 1, component_merchant_sku: "TP-HERCOF", component_merchant_sku_norm: "TP-HERCOF" }
-  ],
-  "HER8": [
-    { qty: 8, component_merchant_sku: "HERCOF1", component_merchant_sku_norm: "HERCOF1" }
-  ],
-  "HIM1": [
-    { qty: 1, component_merchant_sku: "COF1", component_merchant_sku_norm: "COF1" }
-  ],
-  "HIM3": [
-    { qty: 3, component_merchant_sku: "COF1", component_merchant_sku_norm: "COF1" }
-  ],
-  "HIM3LIVE": [
-    { qty: 3, component_merchant_sku: "COF1", component_merchant_sku_norm: "COF1" },
-    { qty: 1, component_merchant_sku: "TP-COF", component_merchant_sku_norm: "TP-COF" },
-    { qty: 1, component_merchant_sku: "TP-HERCOF", component_merchant_sku_norm: "TP-HERCOF" }
-  ],
-  "HIM3SHA/V2": [
-    { qty: 3, component_merchant_sku: "COF1", component_merchant_sku_norm: "COF1" },
-    { qty: 1, component_merchant_sku: "SHAKER", component_merchant_sku_norm: "SHAKER" }
-  ],
-  "HIM3TP": [
-    { qty: 3, component_merchant_sku: "COF1", component_merchant_sku_norm: "COF1" },
-    { qty: 1, component_merchant_sku: "TP-COF", component_merchant_sku_norm: "TP-COF" }
-  ],
-  "HIM3TUMB-V2": [
-    { qty: 3, component_merchant_sku: "COF1", component_merchant_sku_norm: "COF1" },
-    { qty: 1, component_merchant_sku: "TUMB-V2-BLACK", component_merchant_sku_norm: "TUMB-V2-BLACK" }
-  ],
-  "HIM6": [
-    { qty: 6, component_merchant_sku: "COF1", component_merchant_sku_norm: "COF1" }
-  ],
-  "HIMHER1": [
-    { qty: 1, component_merchant_sku: "COF1", component_merchant_sku_norm: "COF1" },
-    { qty: 1, component_merchant_sku: "HERCOF1", component_merchant_sku_norm: "HERCOF1" }
-  ],
-  "SMSU": [
-    { qty: 1, component_merchant_sku: "spr/x1", component_merchant_sku_norm: "SPR/X1" },
-    { qty: 1, component_merchant_sku: "buku/SM", component_merchant_sku_norm: "BUKU/SM" }
-  ],
-  "SPU1": [
-    { qty: 1, component_merchant_sku: "spr/x1", component_merchant_sku_norm: "SPR/X1" }
-  ],
-  "SPUHIM": [
-    { qty: 1, component_merchant_sku: "spr/x1", component_merchant_sku_norm: "SPR/X1" },
-    { qty: 1, component_merchant_sku: "COF1", component_merchant_sku_norm: "COF1" }
-  ]
+// Helper to get current combo SKUs
+function getCurrentComboSkus(): Record<string, Component[]> {
+  const currentData = loadMerchantSkusData();
+  return (currentData.comboSkus || {}) as Record<string, Component[]>;
+}
+
+// Helper to get current single SKUs
+function getCurrentSingleSkus(): Set<string> {
+  const currentData = loadMerchantSkusData();
+  return new Set((currentData.singleSkus || []) as string[]);
+}
+
+// Helper to get current product categories
+function getCurrentProductCategories(): Record<string, string> {
+  const currentData = loadMerchantSkusData();
+  return (currentData.singleSkuProductCategories || {}) as Record<string, string>;
+}
+
+// Combo SKUs with components - loaded from JSON (dynamic)
+// Use a function-based approach for more reliable access
+function getComboSku(sku: string): Component[] | undefined {
+  const skus = getCurrentComboSkus();
+  return skus[sku];
+}
+
+function hasComboSku(sku: string): boolean {
+  const skus = getCurrentComboSkus();
+  return sku in skus;
+}
+
+// Export as Proxy for backward compatibility with existing code
+export const comboSkus = new Proxy({} as Record<string, Component[]>, {
+  get(target, prop) {
+    if (typeof prop === 'string') {
+      return getComboSku(prop);
+    }
+    // For other properties, return undefined
+    return undefined;
+  },
+  has(target, prop) {
+    if (typeof prop === 'string') {
+      return hasComboSku(prop);
+    }
+    return false;
+  },
+  ownKeys(target) {
+    const skus = getCurrentComboSkus();
+    return Object.keys(skus);
+  },
+  getOwnPropertyDescriptor(target, prop) {
+    if (typeof prop === 'string') {
+      const skus = getCurrentComboSkus();
+      if (prop in skus) {
+        return {
+          enumerable: true,
+          configurable: true,
+          value: skus[prop],
+        };
+      }
+    }
+    return undefined;
+  },
+  // Add defineProperty to make it work better with property checks
+  defineProperty(target, prop, descriptor) {
+    return true;
+  },
+});
+
+// Single SKUs - loaded from JSON (dynamic)
+// Create a proper Set-like proxy
+const createSingleSkusProxy = () => {
+  return new Proxy(new Set<string>(), {
+    get(target, prop) {
+      const set = getCurrentSingleSkus();
+      // Return methods from the actual Set
+      if (typeof prop === 'string' && typeof (set as any)[prop] === 'function') {
+        return ((set as any)[prop] as Function).bind(set);
+      }
+      return (set as any)[prop];
+    },
+    has(target, value) {
+      const set = getCurrentSingleSkus();
+      return set.has(value as string);
+    },
+  });
 };
 
-// Single SKUs
-export const singleSkus: Set<string> = new Set([
-  "COF1",
-  "COFCUP-V1",
-  "COFFEE CUP V1",
-  "HBLISS",
-  "HERCOF1",
-  "SHAKER",
-  "TP-COF",
-  "TP-HERCOF",
-  "TUMB-V2-BLACK",
-  "TUMB-V2-GOLD",
-  "VGOMX",
-  "buku/BK",
-  "buku/SM",
-  "spr/x1"
-]);
+export const singleSkus = createSingleSkusProxy();
 
-// Product category mapping for single SKUs
-export const singleSkuProductCategories: Record<string, string> = {
-  "COF1": "HIM Coffee",
-  "COFCUP-V1": "Coffee Cup",
-  "COFFEE CUP V1": "Coffee Cup",
-  "HBLISS": "HER Bliss",
-  "HERCOF1": "HER Coffee",
-  "SHAKER": "Shaker",
-  "TP-COF": "HIM Coffee Trial Pack",
-  "TP-HERCOF": "HER Coffee Trial Pack",
-  "TUMB-V2-BLACK": "Tumbler",
-  "TUMB-V2-GOLD": "Tumbler",
-  "VGOMX": "Vigomax",
-  "buku/BK": "Buku",
-  "buku/SM": "Buku",
-  "spr/x1": "Spray Up"
-};
+// Product category mapping for single SKUs - loaded from JSON (dynamic)
+export const singleSkuProductCategories = new Proxy({} as Record<string, string>, {
+  get(target, prop) {
+    const categories = getCurrentProductCategories();
+    return categories[prop as string];
+  },
+  has(target, prop) {
+    const categories = getCurrentProductCategories();
+    return prop in categories;
+  },
+  ownKeys(target) {
+    const categories = getCurrentProductCategories();
+    return Object.keys(categories);
+  },
+  getOwnPropertyDescriptor(target, prop) {
+    const categories = getCurrentProductCategories();
+    if (prop in categories) {
+      return {
+        enumerable: true,
+        configurable: true,
+        value: categories[prop as string],
+      };
+    }
+  },
+});
+
+// Helper function to check if a SKU is a combo SKU (more reliable than direct property access)
+export function isComboSku(merchantSku: string): boolean {
+  if (!merchantSku) return false;
+  const skus = getCurrentComboSkus();
+  return merchantSku in skus && skus[merchantSku] !== undefined && Array.isArray(skus[merchantSku]);
+}
+
+// Helper function to get combo SKU components
+export function getComboSkuComponents(merchantSku: string): Component[] | undefined {
+  const skus = getCurrentComboSkus();
+  return skus[merchantSku];
+}
 
 // Helper function to get product category for a merchant SKU
 export function getProductCategory(merchantSku: string): string | undefined {
-  return singleSkuProductCategories[merchantSku];
+  const categories = getCurrentProductCategories();
+  return categories[merchantSku];
 }
 
 

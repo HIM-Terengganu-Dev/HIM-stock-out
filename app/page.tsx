@@ -1,11 +1,13 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { parseExcelFile, exportToExcel, exportReport4, exportBreakdownReport, exportMissingMerchantSkus } from '@/lib/excelUtils';
 import { generateReport1, generateReport2, generateReport3, generateReport4, generateBreakdownReport, findMissingMerchantSkus, getDateRange, OrderRow, MissingMerchantSku } from '@/lib/analysis';
+import { updateMerchantSkusData } from '@/lib/merchantSkuReference';
 import FileUpload from '@/components/FileUpload';
 import ReportTabs from '@/components/ReportTabs';
 import ReportContainer from '@/components/ReportContainer';
+import MerchantSkuManager from '@/components/MerchantSkuManager';
 
 export default function Home() {
   const [orders, setOrders] = useState<OrderRow[]>([]);
@@ -23,6 +25,22 @@ export default function Home() {
 
   // UI State
   const [activeTab, setActiveTab] = useState('summary');
+
+  // Load merchant SKU data on mount (client-side)
+  useEffect(() => {
+    const loadMerchantSkus = async () => {
+      try {
+        const response = await fetch('/api/merchant-skus/data');
+        if (response.ok) {
+          const data = await response.json();
+          updateMerchantSkusData(data);
+        }
+      } catch (error) {
+        console.error('Failed to load merchant SKU data:', error);
+      }
+    };
+    loadMerchantSkus();
+  }, []);
 
   // Helper functions for date ranges
   const getReport1DateRange = () => {
@@ -88,6 +106,17 @@ export default function Home() {
     setError(null);
 
     try {
+      // Ensure merchant SKU data is loaded before analysis
+      try {
+        const response = await fetch('/api/merchant-skus/data');
+        if (response.ok) {
+          const data = await response.json();
+          updateMerchantSkusData(data);
+        }
+      } catch (err) {
+        console.warn('Failed to reload merchant SKU data:', err);
+      }
+
       const parsedOrders = await parseExcelFile(file);
       setOrders(parsedOrders);
       setFilteredOrders(parsedOrders);
@@ -144,6 +173,7 @@ export default function Home() {
     { id: 'report4', label: 'Report 4: Detailed' },
     { id: 'breakdown', label: 'Breakdown' },
     { id: 'missing', label: 'Missing SKUs' },
+    { id: 'manage', label: 'Manage SKUs' },
   ];
 
   return (
@@ -160,11 +190,10 @@ export default function Home() {
           </div>
         )}
 
-        {orders.length > 0 && (
-          <div className="mt-8">
-            <ReportTabs activeTab={activeTab} onTabChange={setActiveTab} tabs={tabs} />
+        <div className="mt-8">
+          <ReportTabs activeTab={activeTab} onTabChange={setActiveTab} tabs={tabs} />
 
-            <div className="bg-white rounded-lg shadow min-h-[400px] p-6">
+          <div className="bg-white rounded-lg shadow min-h-[400px] p-6">
               {activeTab === 'report1' && (
                 <ReportContainer
                   title="Report 1: All Marketplace (Excluding Canceled)"
@@ -237,8 +266,9 @@ export default function Home() {
                   title="Breakdown Report: By Marketplace and Merchant SKU"
                   dateRange={getBreakdownDateRange()}
                   data={breakdownReport.map(item => ({
-                    // Mapping for visual compatibility
-                    ...item,
+                    // Mapping for ReportDisplay compatibility
+                    marketplace: item.marketplace,
+                    merchant_sku: item.merchant_sku_order_item, // Show the order item SKU
                     product_category: item.product_category,
                     stock_out_quantity: item.total_merchandise_quantity
                   }))}
@@ -291,9 +321,18 @@ export default function Home() {
                   )}
                 </div>
               )}
+
+              {activeTab === 'manage' && (
+                <MerchantSkuManager />
+              )}
+
+              {activeTab !== 'manage' && orders.length === 0 && (
+                <div className="text-center py-12 text-gray-500">
+                  <p>Please upload an Excel file to view reports</p>
+                </div>
+              )}
             </div>
           </div>
-        )}
       </div>
     </div>
   );

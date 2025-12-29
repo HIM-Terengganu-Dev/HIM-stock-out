@@ -5,7 +5,7 @@ import { useState } from 'react';
 interface ReportDisplayProps {
   title: string;
   dateRange?: string;
-  data: Array<{ merchant_sku: string; product_category?: string; stock_out_quantity: number }>;
+  data: Array<{ merchant_sku: string; product_category?: string; stock_out_quantity: number; marketplace?: string }>;
   onExport: () => void;
   hideExportButton?: boolean;
 }
@@ -98,6 +98,11 @@ export default function ReportDisplay({ title, dateRange, data, onExport, hideEx
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
+              {data[0]?.marketplace && (
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Marketplace
+                </th>
+              )}
               {showMerchantSku && (
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Merchant SKU
@@ -114,6 +119,11 @@ export default function ReportDisplay({ title, dateRange, data, onExport, hideEx
           <tbody className="bg-white divide-y divide-gray-200">
             {data.map((item, idx) => (
               <tr key={idx} className="hover:bg-gray-50">
+                {data[0]?.marketplace && (
+                  <td className="px-4 py-3 text-sm font-medium text-gray-900">
+                    {item.marketplace || '-'}
+                  </td>
+                )}
                 {showMerchantSku && (
                   <td className="px-4 py-3 text-sm font-medium text-gray-900">
                     {item.merchant_sku}

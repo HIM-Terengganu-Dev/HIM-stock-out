@@ -1,4 +1,4 @@
-import { comboSkus, singleSkus, getProductCategory } from './merchantSkuReference';
+import { comboSkus, singleSkus, getProductCategory, isComboSku, getComboSkuComponents } from './merchantSkuReference';
 
 export interface OrderRow {
   [key: string]: any;
@@ -176,13 +176,15 @@ export function calculateStockOutQuantities(orders: OrderRow[]): Record<string, 
     if (!merchantSku) continue;
     
     // Check if it's a combo SKU
-    if (comboSkus[merchantSku]) {
-      const components = comboSkus[merchantSku];
-      for (const comp of components) {
+    if (isComboSku(merchantSku)) {
+      const components = getComboSkuComponents(merchantSku);
+      if (components && Array.isArray(components)) {
+        for (const comp of components) {
         const componentSku = comp.component_merchant_sku;
         const componentQty = comp.qty;
         const totalQty = componentQty * orderQty;
-        stockoutQuantities[componentSku] = (stockoutQuantities[componentSku] || 0) + totalQty;
+          stockoutQuantities[componentSku] = (stockoutQuantities[componentSku] || 0) + totalQty;
+        }
       }
     }
     // Check if it's a single SKU
@@ -277,22 +279,24 @@ export function generateReport4(orders: OrderRow[]): {
       if (!merchantSku) continue;
       
       // Check if it's a combo SKU
-      if (comboSkus[merchantSku]) {
-        const components = comboSkus[merchantSku];
-        for (const comp of components) {
-          const componentSku = comp.component_merchant_sku;
-          const componentQty = comp.qty;
-          const totalQty = componentQty * orderQty;
-          
-          detailedRecords.push({
-            marketplace,
-            merchant_sku: componentSku,
-            product_category: getProductCategory(componentSku),
-            stock_out_quantity: totalQty,
-            order_merchant_sku: merchantSku,
-            order_quantity: orderQty,
-            component_qty_per_unit: componentQty
-          });
+      if (isComboSku(merchantSku)) {
+        const components = getComboSkuComponents(merchantSku);
+        if (components && Array.isArray(components)) {
+          for (const comp of components) {
+            const componentSku = comp.component_merchant_sku;
+            const componentQty = comp.qty;
+            const totalQty = componentQty * orderQty;
+            
+            detailedRecords.push({
+              marketplace,
+              merchant_sku: componentSku,
+              product_category: getProductCategory(componentSku),
+              stock_out_quantity: totalQty,
+              order_merchant_sku: merchantSku,
+              order_quantity: orderQty,
+              component_qty_per_unit: componentQty
+            });
+          }
         }
       }
       // Check if it's a single SKU
@@ -382,28 +386,30 @@ export function generateBreakdownReport(orders: OrderRow[]): BreakdownRecord[] {
       if (!merchantSku) continue;
       
       // Check if it's a combo SKU
-      if (comboSkus[merchantSku]) {
-        const components = comboSkus[merchantSku];
-        for (const comp of components) {
-          const componentSku = comp.component_merchant_sku;
-          const componentQty = comp.qty;
-          const totalQty = componentQty * orderQty;
-          
-          // Create aggregation key: marketplace|order_item_sku|component_sku
-          const key = `${marketplace}|${merchantSku}|${componentSku}`;
-          
-          if (aggregatedMap[key]) {
-            aggregatedMap[key].order_quantity_sum += orderQty;
-            aggregatedMap[key].total_merchandise_quantity += totalQty;
-          } else {
-            aggregatedMap[key] = {
-              marketplace,
-              merchant_sku_order_item: merchantSku,
-              merchandise_sku_component: componentSku,
-              merchandise_quantity_per_order_item: componentQty,
-              order_quantity_sum: orderQty,
-              total_merchandise_quantity: totalQty
-            };
+      if (isComboSku(merchantSku)) {
+        const components = getComboSkuComponents(merchantSku);
+        if (components && Array.isArray(components)) {
+          for (const comp of components) {
+            const componentSku = comp.component_merchant_sku;
+            const componentQty = comp.qty;
+            const totalQty = componentQty * orderQty;
+            
+            // Create aggregation key: marketplace|order_item_sku|component_sku
+            const key = `${marketplace}|${merchantSku}|${componentSku}`;
+            
+            if (aggregatedMap[key]) {
+              aggregatedMap[key].order_quantity_sum += orderQty;
+              aggregatedMap[key].total_merchandise_quantity += totalQty;
+            } else {
+              aggregatedMap[key] = {
+                marketplace,
+                merchant_sku_order_item: merchantSku,
+                merchandise_sku_component: componentSku,
+                merchandise_quantity_per_order_item: componentQty,
+                order_quantity_sum: orderQty,
+                total_merchandise_quantity: totalQty
+              };
+            }
           }
         }
       }
