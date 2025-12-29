@@ -5,7 +5,7 @@ import { getDbPool } from '@/lib/db';
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { merchant_sku, merchant_sku_norm, components } = body;
+    const { merchant_sku, components } = body;
     
     if (!merchant_sku || !components || !Array.isArray(components)) {
       return NextResponse.json(
@@ -15,19 +15,17 @@ export async function POST(request: NextRequest) {
     }
     
     const pool = getDbPool();
-    const normalized = merchant_sku_norm || merchant_sku.toUpperCase();
     const componentsJson = JSON.stringify(components);
     
-    // Upsert (insert or update)
+    // Upsert (insert or update) - merchant_sku_norm is auto-calculated by database
     await pool.query(`
-      INSERT INTO ref_sku.merchant_sku_combo (merchant_sku, merchant_sku_norm, components)
-      VALUES ($1, $2, $3::jsonb)
+      INSERT INTO ref_sku.merchant_sku_combo (merchant_sku, components)
+      VALUES ($1, $2::jsonb)
       ON CONFLICT (merchant_sku) 
       DO UPDATE SET 
-        merchant_sku_norm = EXCLUDED.merchant_sku_norm,
         components = EXCLUDED.components,
         updated_at = NOW()
-    `, [merchant_sku, normalized, componentsJson]);
+    `, [merchant_sku, componentsJson]);
     
     return NextResponse.json({ success: true });
   } catch (error) {

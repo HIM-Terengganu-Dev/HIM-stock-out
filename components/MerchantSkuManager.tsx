@@ -44,7 +44,6 @@ export default function MerchantSkuManager() {
   // Single SKU form
   const [singleForm, setSingleForm] = useState({
     merchant_sku: '',
-    merchant_sku_norm: '',
     product_category: '',
     sale_class: '',
   });
@@ -52,7 +51,6 @@ export default function MerchantSkuManager() {
   // Combo SKU form
   const [comboForm, setComboForm] = useState({
     merchant_sku: '',
-    merchant_sku_norm: '',
     components: [] as Component[],
   });
   const [newComponent, setNewComponent] = useState({
@@ -179,7 +177,6 @@ export default function MerchantSkuManager() {
     setEditingSingle(sku);
     setSingleForm({
       merchant_sku: sku.merchant_sku,
-      merchant_sku_norm: sku.merchant_sku_norm || sku.merchant_sku.toUpperCase(),
       product_category: sku.product_category || '',
       sale_class: sku.sale_class || '',
     });
@@ -236,7 +233,6 @@ export default function MerchantSkuManager() {
     setEditingCombo(sku);
     setComboForm({
       merchant_sku: sku.merchant_sku,
-      merchant_sku_norm: sku.merchant_sku_norm || sku.merchant_sku.toUpperCase(),
       components: sku.components || [],
     });
     setShowComboForm(true);
@@ -329,7 +325,7 @@ export default function MerchantSkuManager() {
               onClick={() => {
                 setShowSingleForm(true);
                 setEditingSingle(null);
-                setSingleForm({ merchant_sku: '', merchant_sku_norm: '', product_category: '', sale_class: '' });
+                setSingleForm({ merchant_sku: '', product_category: '', sale_class: '' });
               }}
               className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
             >
@@ -349,15 +345,6 @@ export default function MerchantSkuManager() {
                     onChange={(e) => setSingleForm({ ...singleForm, merchant_sku: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded"
                     disabled={!!editingSingle}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Merchant SKU Norm</label>
-                  <input
-                    type="text"
-                    value={singleForm.merchant_sku_norm}
-                    onChange={(e) => setSingleForm({ ...singleForm, merchant_sku_norm: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded"
                   />
                 </div>
                 <div>
@@ -456,7 +443,7 @@ export default function MerchantSkuManager() {
               onClick={() => {
                 setShowComboForm(true);
                 setEditingCombo(null);
-                setComboForm({ merchant_sku: '', merchant_sku_norm: '', components: [] });
+                setComboForm({ merchant_sku: '', components: [] });
               }}
               className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
             >
@@ -467,7 +454,7 @@ export default function MerchantSkuManager() {
           {showComboForm && (
             <div className="p-4 bg-gray-50 rounded-lg border">
               <h4 className="font-semibold mb-3">{editingCombo ? 'Edit' : 'Add'} Combo SKU</h4>
-              <div className="grid grid-cols-2 gap-4 mb-4">
+              <div className="mb-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Merchant SKU *</label>
                   <input
@@ -476,15 +463,6 @@ export default function MerchantSkuManager() {
                     onChange={(e) => setComboForm({ ...comboForm, merchant_sku: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded"
                     disabled={!!editingCombo}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Merchant SKU Norm</label>
-                  <input
-                    type="text"
-                    value={comboForm.merchant_sku_norm}
-                    onChange={(e) => setComboForm({ ...comboForm, merchant_sku_norm: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded"
                   />
                 </div>
               </div>

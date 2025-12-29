@@ -5,7 +5,7 @@ import { getDbPool } from '@/lib/db';
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { merchant_sku, merchant_sku_norm, product_category, sale_class } = body;
+    const { merchant_sku, product_category, sale_class } = body;
     
     if (!merchant_sku || !product_category) {
       return NextResponse.json(
@@ -15,19 +15,17 @@ export async function POST(request: NextRequest) {
     }
     
     const pool = getDbPool();
-    const normalized = merchant_sku_norm || merchant_sku.toUpperCase();
     
-    // Upsert (insert or update)
+    // Upsert (insert or update) - merchant_sku_norm is auto-calculated by database
     await pool.query(`
-      INSERT INTO ref_sku.merchant_sku_single (merchant_sku, merchant_sku_norm, product_category, sale_class)
-      VALUES ($1, $2, $3, $4)
+      INSERT INTO ref_sku.merchant_sku_single (merchant_sku, product_category, sale_class)
+      VALUES ($1, $2, $3)
       ON CONFLICT (merchant_sku) 
       DO UPDATE SET 
-        merchant_sku_norm = EXCLUDED.merchant_sku_norm,
         product_category = EXCLUDED.product_category,
         sale_class = EXCLUDED.sale_class,
         updated_at = NOW()
-    `, [merchant_sku, normalized, product_category, sale_class || null]);
+    `, [merchant_sku, product_category, sale_class || null]);
     
     return NextResponse.json({ success: true });
   } catch (error) {
