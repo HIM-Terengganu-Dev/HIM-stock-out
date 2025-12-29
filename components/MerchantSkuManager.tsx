@@ -35,6 +35,11 @@ export default function MerchantSkuManager() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   
+  // Dropdown options
+  const [productCategories, setProductCategories] = useState<string[]>([]);
+  const [saleClasses, setSaleClasses] = useState<string[]>([]);
+  const [singleSkuOptions, setSingleSkuOptions] = useState<string[]>([]);
+  
   // Form states
   const [showSingleForm, setShowSingleForm] = useState(false);
   const [showComboForm, setShowComboForm] = useState(false);
@@ -61,7 +66,21 @@ export default function MerchantSkuManager() {
 
   useEffect(() => {
     loadData();
+    loadDropdownOptions();
   }, []);
+
+  const loadDropdownOptions = async () => {
+    try {
+      const response = await fetch('/api/merchant-skus/dropdowns');
+      if (!response.ok) throw new Error('Failed to load dropdown options');
+      const data = await response.json();
+      setProductCategories(data.productCategories || []);
+      setSaleClasses(data.saleClasses || []);
+      setSingleSkuOptions(data.singleSkus || []);
+    } catch (err) {
+      console.error('Failed to load dropdown options:', err);
+    }
+  };
 
   const loadData = async () => {
     setLoading(true);
@@ -143,6 +162,7 @@ export default function MerchantSkuManager() {
       });
       if (!response.ok) throw new Error('Failed to save');
       await loadData();
+      await loadDropdownOptions(); // Refresh dropdowns in case new categories/classes were added
       setShowSingleForm(false);
       setEditingSingle(null);
       setSingleForm({ merchant_sku: '', product_category: '', sale_class: '' });
@@ -165,6 +185,7 @@ export default function MerchantSkuManager() {
       });
       if (!response.ok) throw new Error('Failed to delete');
       await loadData();
+      await loadDropdownOptions(); // Refresh dropdowns after deletion
       setSuccess('Single SKU deleted successfully');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to delete single SKU');
@@ -199,6 +220,7 @@ export default function MerchantSkuManager() {
       });
       if (!response.ok) throw new Error('Failed to save');
       await loadData();
+      await loadDropdownOptions(); // Refresh dropdowns in case new single SKUs were added
       setShowComboForm(false);
       setEditingCombo(null);
       setComboForm({ merchant_sku: '', components: [] });
@@ -221,6 +243,7 @@ export default function MerchantSkuManager() {
       });
       if (!response.ok) throw new Error('Failed to delete');
       await loadData();
+      await loadDropdownOptions(); // Refresh dropdowns after deletion
       setSuccess('Combo SKU deleted successfully');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to delete combo SKU');
@@ -349,21 +372,33 @@ export default function MerchantSkuManager() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Product Category *</label>
-                  <input
-                    type="text"
+                  <select
                     value={singleForm.product_category}
                     onChange={(e) => setSingleForm({ ...singleForm, product_category: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded"
-                  />
+                  >
+                    <option value="">Select Product Category</option>
+                    {productCategories.map((cat) => (
+                      <option key={cat} value={cat}>
+                        {cat}
+                      </option>
+                    ))}
+                  </select>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Sale Class</label>
-                  <input
-                    type="text"
+                  <select
                     value={singleForm.sale_class}
                     onChange={(e) => setSingleForm({ ...singleForm, sale_class: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded"
-                  />
+                  >
+                    <option value="">Select Sale Class (Optional)</option>
+                    {saleClasses.map((saleClass) => (
+                      <option key={saleClass} value={saleClass}>
+                        {saleClass}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               </div>
               <div className="mt-4 flex gap-2">
@@ -478,13 +513,18 @@ export default function MerchantSkuManager() {
                     className="px-3 py-2 border border-gray-300 rounded"
                     min="1"
                   />
-                  <input
-                    type="text"
-                    placeholder="Component SKU"
+                  <select
                     value={newComponent.component_merchant_sku}
                     onChange={(e) => setNewComponent({ ...newComponent, component_merchant_sku: e.target.value })}
                     className="px-3 py-2 border border-gray-300 rounded col-span-2"
-                  />
+                  >
+                    <option value="">Select Component SKU</option>
+                    {singleSkuOptions.map((sku) => (
+                      <option key={sku} value={sku}>
+                        {sku}
+                      </option>
+                    ))}
+                  </select>
                   <button
                     onClick={addComponent}
                     className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
