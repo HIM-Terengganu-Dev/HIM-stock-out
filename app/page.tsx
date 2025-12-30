@@ -8,6 +8,7 @@ import FileUpload from '@/components/FileUpload';
 import ReportTabs from '@/components/ReportTabs';
 import ReportContainer from '@/components/ReportContainer';
 import MerchantSkuManager from '@/components/MerchantSkuManager';
+import SkuNotification from '@/components/SkuNotification';
 
 export default function Home() {
   const [orders, setOrders] = useState<OrderRow[]>([]);
@@ -25,6 +26,7 @@ export default function Home() {
 
   // UI State
   const [activeTab, setActiveTab] = useState('summary');
+  const [showNotification, setShowNotification] = useState(false);
 
   // Load merchant SKU data on mount (client-side)
   useEffect(() => {
@@ -129,6 +131,9 @@ export default function Home() {
       setBreakdownReport(generateBreakdownReport(parsedOrders));
       setMissingMerchantSkus(findMissingMerchantSkus(parsedOrders));
 
+      // Show notification after analysis
+      setShowNotification(true);
+
       // Default to first report tab if data loaded
       setActiveTab('report1');
 
@@ -165,14 +170,13 @@ export default function Home() {
     if (missingMerchantSkus.length > 0) exportMissingMerchantSkus(missingMerchantSkus, 'missing_merchant_skus.xlsx');
   };
 
-  // Tabs Configuration
+  // Tabs Configuration (removed 'missing' tab as it's now a notification)
   const tabs = [
     { id: 'report1', label: 'Report 1: Overview' },
     { id: 'report2', label: 'Report 2: Completed' },
     { id: 'report3', label: 'Report 3: By Marketplace' },
     { id: 'report4', label: 'Report 4: Detailed' },
     { id: 'breakdown', label: 'Breakdown' },
-    { id: 'missing', label: 'Missing SKUs' },
     { id: 'manage', label: 'Manage SKUs' },
   ];
 
@@ -182,7 +186,20 @@ export default function Home() {
         <h1 className="text-3xl font-bold text-gray-900 mb-2">Stock-Out Tracker</h1>
         <p className="text-gray-600 mb-8">Upload your orders Excel file to generate visual stock-out reports</p>
 
-        <FileUpload onFileUpload={handleFileUpload} loading={loading} />
+        <div className="flex gap-6 mb-8">
+          {/* Left side - Notification area (25%) */}
+          {showNotification && (
+            <SkuNotification 
+              missingSkus={missingMerchantSkus} 
+              onClose={() => setShowNotification(false)}
+            />
+          )}
+          
+          {/* Right side - File Upload (75%) */}
+          <div className={`${showNotification ? 'w-3/4' : 'w-full'}`}>
+            <FileUpload onFileUpload={handleFileUpload} loading={loading} />
+          </div>
+        </div>
 
         {error && (
           <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
@@ -274,52 +291,6 @@ export default function Home() {
                   }))}
                   onExport={handleExportBreakdown}
                 />
-              )}
-
-              {activeTab === 'missing' && (
-                <div className={`p-6 border-2 rounded-lg ${missingMerchantSkus.length > 0 ? 'border-yellow-300 bg-yellow-50' : 'border-green-300 bg-green-50'}`}>
-                  <div className="flex justify-between items-center mb-4">
-                    <div>
-                      <h2 className={`text-xl font-semibold ${missingMerchantSkus.length > 0 ? 'text-yellow-800' : 'text-green-800'}`}>
-                        {missingMerchantSkus.length > 0 ? '⚠️ Missing Merchant SKUs' : '✅ All Merchant SKUs Present'}
-                      </h2>
-                      <p className="text-sm text-gray-600 mt-1">
-                        {missingMerchantSkus.length > 0
-                          ? 'Merchant SKUs not found in reference files.'
-                          : 'All merchant SKUs are accounted for.'}
-                      </p>
-                    </div>
-                    {missingMerchantSkus.length > 0 && (
-                      <button
-                        onClick={handleExportMissingSkus}
-                        className="px-4 py-2 bg-yellow-600 text-white rounded hover:bg-yellow-700"
-                      >
-                        Export
-                      </button>
-                    )}
-                  </div>
-
-                  {missingMerchantSkus.length > 0 && (
-                    <div className="overflow-x-auto bg-white rounded-lg border shadow-sm">
-                      <table className="min-w-full divide-y divide-gray-200">
-                        <thead className="bg-gray-50">
-                          <tr>
-                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Marketplace</th>
-                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Merchant SKU</th>
-                          </tr>
-                        </thead>
-                        <tbody className="bg-white divide-y divide-gray-200">
-                          {missingMerchantSkus.map((item, idx) => (
-                            <tr key={idx} className="hover:bg-gray-50">
-                              <td className="px-4 py-3 text-sm font-medium text-gray-900">{item.marketplace}</td>
-                              <td className="px-4 py-3 text-sm text-gray-900">{item.merchant_sku}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
-                </div>
               )}
 
               {activeTab === 'manage' && (

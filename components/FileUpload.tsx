@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useState } from 'react';
+import { useCallback, useState, useRef } from 'react';
 
 interface FileUploadProps {
   onFileUpload: (file: File) => void;
@@ -9,6 +9,7 @@ interface FileUploadProps {
 
 export default function FileUpload({ onFileUpload, loading }: FileUploadProps) {
   const [isDragging, setIsDragging] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -44,6 +45,12 @@ export default function FileUpload({ onFileUpload, loading }: FileUploadProps) {
     }
   }, [onFileUpload]);
 
+  const handleBrowseClick = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    fileInputRef.current?.click();
+  }, []);
+
   return (
     <div
       onDragOver={handleDragOver}
@@ -59,6 +66,7 @@ export default function FileUpload({ onFileUpload, loading }: FileUploadProps) {
       `}
     >
       <input
+        ref={fileInputRef}
         type="file"
         accept=".xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
         onChange={handleFileSelect}
@@ -93,6 +101,7 @@ export default function FileUpload({ onFileUpload, loading }: FileUploadProps) {
             <p className="text-sm text-gray-500 mb-4">or</p>
             <button
               type="button"
+              onClick={handleBrowseClick}
               className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
             >
               Browse Files
