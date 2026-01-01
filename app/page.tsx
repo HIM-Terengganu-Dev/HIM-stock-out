@@ -63,17 +63,34 @@ export default function Home() {
     }
   }, [dateRange, orders, generateAllReports]);
 
+  // Helper function to format date range
+  const formatDateRange = (start: Date | null, end: Date | null): string | null => {
+    if (!start && !end) return null;
+    
+    const formatDate = (date: Date) => {
+      return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+    };
+    
+    if (start && end) {
+      return `${formatDate(start)} - ${formatDate(end)}`;
+    } else if (start) {
+      return `${formatDate(start)} onwards`;
+    } else if (end) {
+      return `up to ${formatDate(end)}`;
+    }
+    return null;
+  };
+
   // Helper functions for date ranges - now use filtered data based on user's date filter
   const getReport1DateRange = () => {
+    // If user has set a date filter, show the user's selected range
+    const userRange = formatDateRange(dateRange.start, dateRange.end);
+    if (userRange) return userRange;
+    
+    // Otherwise, extract date range from the actual data
     const TARGET_MARKETPLACES = ['TikTok', 'Shopee', 'Lazada'];
     const CANCELED_STATUSES = ['Canceled', 'Cancelled', 'Cancellation'];
-    
-    // Apply date filter first
-    const dateFiltered = dateRange.start || dateRange.end
-      ? filterByDateRange(filteredOrders, dateRange.start, dateRange.end, 'Order Time')
-      : filteredOrders;
-    
-    const filtered = dateFiltered.filter(order =>
+    const filtered = filteredOrders.filter(order =>
       TARGET_MARKETPLACES.includes(order['Marketplace'] || '')
     );
     const excludingCanceled = filtered.filter(order =>
@@ -83,14 +100,13 @@ export default function Home() {
   };
 
   const getReport2DateRange = () => {
+    // If user has set a date filter, show the user's selected range
+    const userRange = formatDateRange(dateRange.start, dateRange.end);
+    if (userRange) return userRange;
+    
+    // Otherwise, extract date range from the actual data
     const TARGET_MARKETPLACES = ['TikTok', 'Shopee', 'Lazada'];
-    
-    // Apply date filter using Completed Time for Report 2
-    const dateFiltered = dateRange.start || dateRange.end
-      ? filterByDateRange(filteredOrders, dateRange.start, dateRange.end, 'Completed Time')
-      : filteredOrders;
-    
-    const filtered = dateFiltered.filter(order =>
+    const filtered = filteredOrders.filter(order =>
       TARGET_MARKETPLACES.includes(order['Marketplace'] || '')
     );
     const completed = filtered.filter(order => order['Marketplace Status'] === 'Completed');
@@ -98,15 +114,14 @@ export default function Home() {
   };
 
   const getReport3DateRange = (marketplace: string) => {
+    // If user has set a date filter, show the user's selected range
+    const userRange = formatDateRange(dateRange.start, dateRange.end);
+    if (userRange) return userRange;
+    
+    // Otherwise, extract date range from the actual data
     const CANCELED_STATUSES = ['Canceled', 'Cancelled', 'Cancellation'];
     const TARGET_MARKETPLACES = ['TikTok', 'Shopee', 'Lazada'];
-    
-    // Apply date filter first
-    const dateFiltered = dateRange.start || dateRange.end
-      ? filterByDateRange(filteredOrders, dateRange.start, dateRange.end, 'Order Time')
-      : filteredOrders;
-    
-    const filtered = dateFiltered.filter(order =>
+    const filtered = filteredOrders.filter(order =>
       TARGET_MARKETPLACES.includes(order['Marketplace'] || '')
     );
     const excludingCanceled = filtered.filter(order =>
@@ -117,15 +132,14 @@ export default function Home() {
   };
 
   const getReport4DateRange = () => {
+    // If user has set a date filter, show the user's selected range
+    const userRange = formatDateRange(dateRange.start, dateRange.end);
+    if (userRange) return userRange;
+    
+    // Otherwise, extract date range from the actual data
     const TARGET_MARKETPLACES = ['TikTok', 'Shopee', 'Lazada'];
     const CANCELED_STATUSES = ['Canceled', 'Cancelled', 'Cancellation'];
-    
-    // Apply date filter first
-    const dateFiltered = dateRange.start || dateRange.end
-      ? filterByDateRange(filteredOrders, dateRange.start, dateRange.end, 'Order Time')
-      : filteredOrders;
-    
-    const filtered = dateFiltered.filter(order =>
+    const filtered = filteredOrders.filter(order =>
       TARGET_MARKETPLACES.includes(order['Marketplace'] || '')
     );
     const excludingCanceled = filtered.filter(order =>
@@ -135,15 +149,14 @@ export default function Home() {
   };
 
   const getBreakdownDateRange = () => {
+    // If user has set a date filter, show the user's selected range
+    const userRange = formatDateRange(dateRange.start, dateRange.end);
+    if (userRange) return userRange;
+    
+    // Otherwise, extract date range from the actual data
     const TARGET_MARKETPLACES = ['TikTok', 'Shopee', 'Lazada'];
     const CANCELED_STATUSES = ['Canceled', 'Cancelled', 'Cancellation'];
-    
-    // Apply date filter first
-    const dateFiltered = dateRange.start || dateRange.end
-      ? filterByDateRange(filteredOrders, dateRange.start, dateRange.end, 'Order Time')
-      : filteredOrders;
-    
-    const filtered = dateFiltered.filter(order =>
+    const filtered = filteredOrders.filter(order =>
       TARGET_MARKETPLACES.includes(order['Marketplace'] || '')
     );
     const excludingCanceled = filtered.filter(order =>
@@ -279,16 +292,18 @@ export default function Home() {
 
               {activeTab === 'report3' && (
                 <div className="space-y-8">
-                  <div className="flex justify-between items-center mb-4">
+                  <div className="mb-4">
                     <h2 className="text-xl font-semibold">Report 3: Grouped by Marketplace</h2>
-                    {getReport3DateRange(Object.keys(report3)[0] || '') && (
-                      <p className="text-sm text-gray-500">Range: {getReport3DateRange(Object.keys(report3)[0] || '')}</p>
-                    )}
                   </div>
                   {Object.entries(report3).map(([marketplace, data]) => (
                     <div key={marketplace} className="border-t pt-6 first:border-0 first:pt-0">
-                      <div className="flex justify-between items-center mb-4">
-                        <h3 className="text-lg font-medium text-gray-900">{marketplace}</h3>
+                      <div className="flex justify-between items-start mb-4">
+                        <div>
+                          <h3 className="text-lg font-medium text-gray-900">{marketplace}</h3>
+                          {getReport3DateRange(marketplace) && (
+                            <p className="text-sm text-gray-500 mt-1">Date Range: {getReport3DateRange(marketplace)}</p>
+                          )}
+                        </div>
                         <button
                           onClick={() => handleExportReport3(marketplace)}
                           className="text-sm text-blue-600 hover:text-blue-800"
