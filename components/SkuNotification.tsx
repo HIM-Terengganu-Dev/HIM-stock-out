@@ -1,7 +1,6 @@
 'use client';
 
 import { CheckCircle2, AlertCircle, X } from 'lucide-react';
-import { exportMissingMerchantSkus } from '@/lib/excelUtils';
 import type { MissingMerchantSku } from '@/lib/analysis';
 
 interface SkuNotificationProps {
@@ -27,11 +26,6 @@ export default function SkuNotification({ missingSkus, onClose }: SkuNotificatio
       </div>
     );
   }
-
-  const handleExport = () => {
-    const filename = `missing_merchant_skus_${new Date().toISOString().split('T')[0]}.xlsx`;
-    exportMissingMerchantSkus(missingSkus, filename);
-  };
 
   return (
     <div className="w-1/4 flex items-start justify-center p-6">
@@ -73,13 +67,6 @@ export default function SkuNotification({ missingSkus, onClose }: SkuNotificatio
           )}
         </div>
 
-        <button
-          onClick={handleExport}
-          className="w-full bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors text-sm font-medium"
-        >
-          Export Missing SKUs to Excel
-        </button>
-        
         <button
           onClick={onClose}
           className="w-full mt-2 text-sm text-red-600 hover:text-red-800 underline"

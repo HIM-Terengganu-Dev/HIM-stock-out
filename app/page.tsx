@@ -9,6 +9,7 @@ import ReportTabs from '@/components/ReportTabs';
 import ReportContainer from '@/components/ReportContainer';
 import MerchantSkuManager from '@/components/MerchantSkuManager';
 import SkuNotification from '@/components/SkuNotification';
+import DateRangePicker from '@/components/DateRangePicker';
 
 export default function Home() {
   const [orders, setOrders] = useState<OrderRow[]>([]);
@@ -27,6 +28,17 @@ export default function Home() {
   // UI State
   const [activeTab, setActiveTab] = useState('summary');
   const [showNotification, setShowNotification] = useState(false);
+  const [dateRange, setDateRange] = useState<{ start: Date | null, end: Date | null }>({ start: null, end: null });
+
+  // Function to generate all reports with current date range
+  const generateAllReports = useCallback((orders: OrderRow[], dateRange: { start: Date | null, end: Date | null }) => {
+    setReport1(generateReport1(orders, dateRange));
+    setReport2(generateReport2(orders, dateRange));
+    setReport3(generateReport3(orders, dateRange));
+    setReport4(generateReport4(orders, dateRange));
+    setBreakdownReport(generateBreakdownReport(orders, dateRange));
+    setMissingMerchantSkus(findMissingMerchantSkus(orders));
+  }, []);
 
   // Load merchant SKU data on mount (client-side)
   useEffect(() => {
@@ -43,6 +55,13 @@ export default function Home() {
     };
     loadMerchantSkus();
   }, []);
+
+  // Regenerate reports when date range changes
+  useEffect(() => {
+    if (orders.length > 0) {
+      generateAllReports(orders, dateRange);
+    }
+  }, [dateRange, orders, generateAllReports]);
 
   // Helper functions for date ranges
   const getReport1DateRange = () => {
@@ -123,13 +142,8 @@ export default function Home() {
       setOrders(parsedOrders);
       setFilteredOrders(parsedOrders);
 
-      // Generate all reports
-      setReport1(generateReport1(parsedOrders));
-      setReport2(generateReport2(parsedOrders));
-      setReport3(generateReport3(parsedOrders));
-      setReport4(generateReport4(parsedOrders));
-      setBreakdownReport(generateBreakdownReport(parsedOrders));
-      setMissingMerchantSkus(findMissingMerchantSkus(parsedOrders));
+      // Generate all reports with current date range
+      generateAllReports(parsedOrders, dateRange);
 
       // Show notification after analysis
       setShowNotification(true);
@@ -142,7 +156,7 @@ export default function Home() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [dateRange, generateAllReports]);
 
   const handleExportReport1 = () => {
     if (report1.length > 0) exportToExcel(report1, 'report1_all_marketplace_excluding_canceled.xlsx');
@@ -205,6 +219,10 @@ export default function Home() {
           <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
             {error}
           </div>
+        )}
+
+        {orders.length > 0 && (
+          <DateRangePicker onDateRangeChange={(start, end) => setDateRange({ start, end })} />
         )}
 
         <div className="mt-8">

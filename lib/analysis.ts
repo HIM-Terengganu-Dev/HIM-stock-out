@@ -98,6 +98,52 @@ function parseDate(dateValue: any): Date | null {
   return null;
 }
 
+// Helper function to find date column by name (case-insensitive)
+function findDateColumn(orders: OrderRow[], columnName: string): string | null {
+  if (orders.length === 0) return null;
+  
+  const orderKeys = Object.keys(orders[0]);
+  const foundKey = orderKeys.find(key => key.toLowerCase() === columnName.toLowerCase());
+  return foundKey || null;
+}
+
+// Filter orders by date range using specified date column
+export function filterByDateRange(
+  orders: OrderRow[], 
+  startDate: Date | null, 
+  endDate: Date | null, 
+  dateColumn: string
+): OrderRow[] {
+  // If no date range specified, return all orders
+  if (!startDate && !endDate) {
+    return orders;
+  }
+  
+  // Find the date column
+  const columnKey = findDateColumn(orders, dateColumn);
+  if (!columnKey) {
+    // Column not found, return all orders
+    return orders;
+  }
+  
+  return orders.filter(order => {
+    const dateValue = order[columnKey];
+    const parsedDate = parseDate(dateValue);
+    
+    if (!parsedDate) {
+      // If date can't be parsed, exclude from results
+      return false;
+    }
+    
+    // Check if date is within range
+    const dateTime = parsedDate.getTime();
+    const startTime = startDate ? startDate.getTime() : Number.NEGATIVE_INFINITY;
+    const endTime = endDate ? endDate.getTime() : Number.POSITIVE_INFINITY;
+    
+    return dateTime >= startTime && dateTime <= endTime;
+  });
+}
+
 // Helper function to extract date range from orders
 export function getDateRange(orders: OrderRow[]): string {
   if (orders.length === 0) return '';
@@ -200,9 +246,18 @@ export function calculateStockOutQuantities(orders: OrderRow[]): Record<string, 
   return stockoutQuantities;
 }
 
-export function generateReport1(orders: OrderRow[]): StockOutQuantity[] {
+export function generateReport1(
+  orders: OrderRow[], 
+  dateRange?: { start: Date | null, end: Date | null }
+): StockOutQuantity[] {
   const filtered = filterOrders(orders);
-  const excludingCanceled = filtered.filter(order => 
+  
+  // Filter by Order Time if date range provided
+  const dateFiltered = dateRange 
+    ? filterByDateRange(filtered, dateRange.start, dateRange.end, 'Order Time')
+    : filtered;
+  
+  const excludingCanceled = dateFiltered.filter(order => 
     !CANCELED_STATUSES.includes(order['Marketplace Status'] || '')
   );
   const quantities = calculateStockOutQuantities(excludingCanceled);
@@ -217,9 +272,18 @@ export function generateReport1(orders: OrderRow[]): StockOutQuantity[] {
   return sortByProductCategory(report);
 }
 
-export function generateReport2(orders: OrderRow[]): StockOutQuantity[] {
+export function generateReport2(
+  orders: OrderRow[], 
+  dateRange?: { start: Date | null, end: Date | null }
+): StockOutQuantity[] {
   const filtered = filterOrders(orders);
-  const completed = filtered.filter(order => order['Marketplace Status'] === 'Completed');
+  
+  // Filter by Completed Time if date range provided, then filter by status
+  const dateFiltered = dateRange 
+    ? filterByDateRange(filtered, dateRange.start, dateRange.end, 'Completed Time')
+    : filtered;
+  
+  const completed = dateFiltered.filter(order => order['Marketplace Status'] === 'Completed');
   const quantities = calculateStockOutQuantities(completed);
   
   const report = Object.entries(quantities)
@@ -232,9 +296,18 @@ export function generateReport2(orders: OrderRow[]): StockOutQuantity[] {
   return sortByProductCategory(report);
 }
 
-export function generateReport3(orders: OrderRow[]): Record<string, StockOutQuantity[]> {
+export function generateReport3(
+  orders: OrderRow[], 
+  dateRange?: { start: Date | null, end: Date | null }
+): Record<string, StockOutQuantity[]> {
   const filtered = filterOrders(orders);
-  const excludingCanceled = filtered.filter(order => 
+  
+  // Filter by Order Time if date range provided
+  const dateFiltered = dateRange 
+    ? filterByDateRange(filtered, dateRange.start, dateRange.end, 'Order Time')
+    : filtered;
+  
+  const excludingCanceled = dateFiltered.filter(order => 
     !CANCELED_STATUSES.includes(order['Marketplace Status'] || '')
   );
   
@@ -257,12 +330,21 @@ export function generateReport3(orders: OrderRow[]): Record<string, StockOutQuan
   return reports;
 }
 
-export function generateReport4(orders: OrderRow[]): {
+export function generateReport4(
+  orders: OrderRow[], 
+  dateRange?: { start: Date | null, end: Date | null }
+): {
   summary: Array<{ marketplace: string; merchant_sku: string; product_category?: string; stock_out_quantity: number }>;
   detailed: DetailedRecord[];
 } {
   const filtered = filterOrders(orders);
-  const excludingCanceled = filtered.filter(order => 
+  
+  // Filter by Order Time if date range provided
+  const dateFiltered = dateRange 
+    ? filterByDateRange(filtered, dateRange.start, dateRange.end, 'Order Time')
+    : filtered;
+  
+  const excludingCanceled = dateFiltered.filter(order => 
     !CANCELED_STATUSES.includes(order['Marketplace Status'] || '')
   );
   
@@ -359,9 +441,18 @@ export function generateReport4(orders: OrderRow[]): {
   return { summary, detailed: detailedRecords };
 }
 
-export function generateBreakdownReport(orders: OrderRow[]): BreakdownRecord[] {
+export function generateBreakdownReport(
+  orders: OrderRow[], 
+  dateRange?: { start: Date | null, end: Date | null }
+): BreakdownRecord[] {
   const filtered = filterOrders(orders);
-  const excludingCanceled = filtered.filter(order => 
+  
+  // Filter by Order Time if date range provided
+  const dateFiltered = dateRange 
+    ? filterByDateRange(filtered, dateRange.start, dateRange.end, 'Order Time')
+    : filtered;
+  
+  const excludingCanceled = dateFiltered.filter(order => 
     !CANCELED_STATUSES.includes(order['Marketplace Status'] || '')
   );
   
