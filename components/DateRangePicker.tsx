@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import CustomDateInput from './CustomDateInput';
 
 interface DateRangePickerProps {
   onDateRangeChange: (start: Date | null, end: Date | null) => void;
@@ -12,33 +13,34 @@ export default function DateRangePicker({ onDateRangeChange }: DateRangePickerPr
   const [endDate, setEndDate] = useState<string>('');
   const [endTime, setEndTime] = useState<string>('');
 
-  // Helper to format date for datetime-local input
-  const formatDateForInput = (date: Date): string => {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-  };
-
-  // Helper to format time for datetime-local input
-  const formatTimeForInput = (date: Date): string => {
-    const hours = String(date.getHours()).padStart(2, '0');
-    const minutes = String(date.getMinutes()).padStart(2, '0');
-    return `${hours}:${minutes}`;
-  };
-
-  // Combine date and time into a Date object
-  const combineDateTime = (dateStr: string, timeStr: string): Date | null => {
+  // Combine date and time into a Date object with defaults
+  const combineDateTime = (dateStr: string, timeStr: string, isEndDate: boolean = false): Date | null => {
     if (!dateStr) return null;
-    const dateTimeStr = timeStr ? `${dateStr}T${timeStr}` : `${dateStr}T00:00`;
+    // Default times: 00:00:00 for start, 23:59:59 for end
+    const defaultTime = isEndDate ? '23:59:59' : '00:00:00';
+    const timeToUse = timeStr || defaultTime;
+    const dateTimeStr = `${dateStr}T${timeToUse}`;
     const date = new Date(dateTimeStr);
     return isNaN(date.getTime()) ? null : date;
   };
 
+  // Auto-set default times when date is selected but time is not set
+  useEffect(() => {
+    if (startDate && !startTime) {
+      setStartTime('00:00:00');
+    }
+  }, [startDate, startTime]);
+
+  useEffect(() => {
+    if (endDate && !endTime) {
+      setEndTime('23:59:59');
+    }
+  }, [endDate, endTime]);
+
   // Notify parent when date range changes
   useEffect(() => {
-    const start = combineDateTime(startDate, startTime);
-    const end = combineDateTime(endDate, endTime);
+    const start = combineDateTime(startDate, startTime, false);
+    const end = combineDateTime(endDate, endTime, true);
     onDateRangeChange(start, end);
   }, [startDate, startTime, endDate, endTime, onDateRangeChange]);
 
@@ -71,17 +73,19 @@ export default function DateRangePicker({ onDateRangeChange }: DateRangePickerPr
             Start Date & Time
           </label>
           <div className="flex gap-2">
-            <input
-              type="date"
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            />
+            <div className="flex-1">
+              <CustomDateInput
+                value={startDate}
+                onChange={setStartDate}
+                placeholder="Start date"
+              />
+            </div>
             <input
               type="time"
-              value={startTime}
+              step="1"
+              value={startTime || '00:00:00'}
               onChange={(e) => setStartTime(e.target.value)}
-              className="w-32 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-36 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             />
           </div>
         </div>
@@ -91,17 +95,19 @@ export default function DateRangePicker({ onDateRangeChange }: DateRangePickerPr
             End Date & Time
           </label>
           <div className="flex gap-2">
-            <input
-              type="date"
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            />
+            <div className="flex-1">
+              <CustomDateInput
+                value={endDate}
+                onChange={setEndDate}
+                placeholder="End date"
+              />
+            </div>
             <input
               type="time"
-              value={endTime}
+              step="1"
+              value={endTime || '23:59:59'}
               onChange={(e) => setEndTime(e.target.value)}
-              className="w-32 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-36 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             />
           </div>
         </div>
@@ -113,11 +119,11 @@ export default function DateRangePicker({ onDateRangeChange }: DateRangePickerPr
       {hasFilter && (
         <p className="text-sm text-gray-600 mt-2">
           {startDate && endDate 
-            ? `Filtering from ${startDate} ${startTime || '00:00'} to ${endDate} ${endTime || '23:59'}`
+            ? `Filtering from ${startDate} ${startTime || '00:00:00'} to ${endDate} ${endTime || '23:59:59'}`
             : startDate 
-            ? `Filtering from ${startDate} ${startTime || '00:00'} onwards`
+            ? `Filtering from ${startDate} ${startTime || '00:00:00'} onwards`
             : endDate
-            ? `Filtering up to ${endDate} ${endTime || '23:59'}`
+            ? `Filtering up to ${endDate} ${endTime || '23:59:59'}`
             : ''}
         </p>
       )}

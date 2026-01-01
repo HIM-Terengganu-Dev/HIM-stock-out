@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect } from 'react';
 import { parseExcelFile, exportToExcel, exportReport4, exportBreakdownReport, exportMissingMerchantSkus } from '@/lib/excelUtils';
-import { generateReport1, generateReport2, generateReport3, generateReport4, generateBreakdownReport, findMissingMerchantSkus, getDateRange, OrderRow, MissingMerchantSku } from '@/lib/analysis';
+import { generateReport1, generateReport2, generateReport3, generateReport4, generateBreakdownReport, findMissingMerchantSkus, getDateRange, filterByDateRange, OrderRow, MissingMerchantSku } from '@/lib/analysis';
 import { updateMerchantSkusData } from '@/lib/merchantSkuReference';
 import FileUpload from '@/components/FileUpload';
 import ReportTabs from '@/components/ReportTabs';
@@ -63,11 +63,17 @@ export default function Home() {
     }
   }, [dateRange, orders, generateAllReports]);
 
-  // Helper functions for date ranges
+  // Helper functions for date ranges - now use filtered data based on user's date filter
   const getReport1DateRange = () => {
     const TARGET_MARKETPLACES = ['TikTok', 'Shopee', 'Lazada'];
     const CANCELED_STATUSES = ['Canceled', 'Cancelled', 'Cancellation'];
-    const filtered = filteredOrders.filter(order =>
+    
+    // Apply date filter first
+    const dateFiltered = dateRange.start || dateRange.end
+      ? filterByDateRange(filteredOrders, dateRange.start, dateRange.end, 'Order Time')
+      : filteredOrders;
+    
+    const filtered = dateFiltered.filter(order =>
       TARGET_MARKETPLACES.includes(order['Marketplace'] || '')
     );
     const excludingCanceled = filtered.filter(order =>
@@ -78,7 +84,13 @@ export default function Home() {
 
   const getReport2DateRange = () => {
     const TARGET_MARKETPLACES = ['TikTok', 'Shopee', 'Lazada'];
-    const filtered = filteredOrders.filter(order =>
+    
+    // Apply date filter using Completed Time for Report 2
+    const dateFiltered = dateRange.start || dateRange.end
+      ? filterByDateRange(filteredOrders, dateRange.start, dateRange.end, 'Completed Time')
+      : filteredOrders;
+    
+    const filtered = dateFiltered.filter(order =>
       TARGET_MARKETPLACES.includes(order['Marketplace'] || '')
     );
     const completed = filtered.filter(order => order['Marketplace Status'] === 'Completed');
@@ -88,7 +100,13 @@ export default function Home() {
   const getReport3DateRange = (marketplace: string) => {
     const CANCELED_STATUSES = ['Canceled', 'Cancelled', 'Cancellation'];
     const TARGET_MARKETPLACES = ['TikTok', 'Shopee', 'Lazada'];
-    const filtered = filteredOrders.filter(order =>
+    
+    // Apply date filter first
+    const dateFiltered = dateRange.start || dateRange.end
+      ? filterByDateRange(filteredOrders, dateRange.start, dateRange.end, 'Order Time')
+      : filteredOrders;
+    
+    const filtered = dateFiltered.filter(order =>
       TARGET_MARKETPLACES.includes(order['Marketplace'] || '')
     );
     const excludingCanceled = filtered.filter(order =>
@@ -101,7 +119,13 @@ export default function Home() {
   const getReport4DateRange = () => {
     const TARGET_MARKETPLACES = ['TikTok', 'Shopee', 'Lazada'];
     const CANCELED_STATUSES = ['Canceled', 'Cancelled', 'Cancellation'];
-    const filtered = filteredOrders.filter(order =>
+    
+    // Apply date filter first
+    const dateFiltered = dateRange.start || dateRange.end
+      ? filterByDateRange(filteredOrders, dateRange.start, dateRange.end, 'Order Time')
+      : filteredOrders;
+    
+    const filtered = dateFiltered.filter(order =>
       TARGET_MARKETPLACES.includes(order['Marketplace'] || '')
     );
     const excludingCanceled = filtered.filter(order =>
@@ -113,7 +137,13 @@ export default function Home() {
   const getBreakdownDateRange = () => {
     const TARGET_MARKETPLACES = ['TikTok', 'Shopee', 'Lazada'];
     const CANCELED_STATUSES = ['Canceled', 'Cancelled', 'Cancellation'];
-    const filtered = filteredOrders.filter(order =>
+    
+    // Apply date filter first
+    const dateFiltered = dateRange.start || dateRange.end
+      ? filterByDateRange(filteredOrders, dateRange.start, dateRange.end, 'Order Time')
+      : filteredOrders;
+    
+    const filtered = dateFiltered.filter(order =>
       TARGET_MARKETPLACES.includes(order['Marketplace'] || '')
     );
     const excludingCanceled = filtered.filter(order =>
