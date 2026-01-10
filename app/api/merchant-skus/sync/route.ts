@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDbPool } from '@/lib/db';
-import fs from 'fs';
-import path from 'path';
 
 // POST - Sync database to JSON file
 export async function POST() {
@@ -51,44 +49,12 @@ export async function POST() {
       singleSkuProductCategories,
     };
     
-    // Check if we're in Vercel (read-only filesystem)
-    const isVercel = process.env.VERCEL === '1' || process.env.VERCEL_ENV;
-    
-    if (isVercel) {
-      // In Vercel, filesystem is read-only - return the JSON data instead
-      // The file would need to be updated at build time or via a different mechanism
-      return NextResponse.json({ 
-        success: true,
-        message: 'Data synced successfully. In Vercel environment, file system is read-only. JSON data is available in response.',
-        isVercel: true,
-        jsonData,
-        stats: {
-          comboCount: Object.keys(comboSkus).length,
-          singleCount: singleSkus.length,
-        }
-      });
-    }
-    
-    // Write to JSON file (local development)
-    const filePath = path.join(process.cwd(), 'merchantSkus.json');
-    try {
-      fs.writeFileSync(filePath, JSON.stringify(jsonData, null, 2), 'utf-8');
-    } catch (writeError) {
-      const errorMessage = writeError instanceof Error ? writeError.message : 'Unknown error';
-      console.error('Error writing to merchantSkus.json:', writeError);
-      return NextResponse.json(
-        { 
-          error: 'Failed to write JSON file', 
-          details: errorMessage,
-          jsonData // Still return the data so it can be used
-        },
-        { status: 500 }
-      );
-    }
-    
+    // Since we're now using database directly, just return the data
+    // No need to write to JSON file - data is always fetched from database
     return NextResponse.json({ 
       success: true,
-      message: 'JSON file updated successfully',
+      message: 'Data synced from database successfully. No file system write needed - data is always fetched from database.',
+      jsonData,
       stats: {
         comboCount: Object.keys(comboSkus).length,
         singleCount: singleSkus.length,

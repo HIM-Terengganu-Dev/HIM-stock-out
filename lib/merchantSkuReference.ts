@@ -1,35 +1,15 @@
-// Merchant SKU reference data loaded from JSON file
+// Merchant SKU reference data loaded from database via API
 
-// For client-side, we'll use a module-level cache that gets populated
-// For server-side, we load from file system
+// For client-side and server-side, we use a module-level cache that gets populated from database
 let merchantSkusData: any = null;
 let dataLoaded = false;
 
 function loadMerchantSkusData() {
+  // Always return cached data if available
   if (merchantSkusData && dataLoaded) return merchantSkusData;
   
-  try {
-    // Server-side: load from file system using dynamic require
-    if (typeof window === 'undefined') {
-      const fs = require('fs');
-      const path = require('path');
-      const filePath = path.join(process.cwd(), 'merchantSkus.json');
-      const fileContent = fs.readFileSync(filePath, 'utf-8');
-      merchantSkusData = JSON.parse(fileContent);
-      dataLoaded = true;
-    } else {
-      // Client-side: use empty structure initially
-      // The data should be loaded via API call in the component
-      if (!merchantSkusData) {
-        merchantSkusData = {
-          comboSkus: {},
-          singleSkus: [],
-          singleSkuProductCategories: {},
-        };
-      }
-    }
-  } catch (error) {
-    console.error('Error loading merchant SKU data:', error);
+  // Initialize with empty structure - data must be loaded via API call
+  if (!merchantSkusData) {
     merchantSkusData = {
       comboSkus: {},
       singleSkus: [],
@@ -40,14 +20,11 @@ function loadMerchantSkusData() {
   return merchantSkusData;
 }
 
-// Function to update data from API (for client-side)
+// Function to update data from API (for client-side and server-side)
 export function updateMerchantSkusData(newData: any) {
   merchantSkusData = newData;
   dataLoaded = true;
 }
-
-// Initialize on module load
-const data = loadMerchantSkusData();
 
 export interface Component {
   qty: number;
