@@ -75,9 +75,10 @@ function getCurrentComboSkus(): Record<string, Component[]> {
 }
 
 // Helper to get current single SKUs
-function getCurrentSingleSkus(): Set<string> {
+// Returns array instead of Set for ES5 compatibility
+function getCurrentSingleSkus(): string[] {
   const currentData = loadMerchantSkusData();
-  return new Set((currentData.singleSkus || []) as string[]);
+  return (currentData.singleSkus || []) as string[];
 }
 
 // Helper to get current product categories
@@ -137,22 +138,19 @@ export const comboSkus = new Proxy({} as Record<string, Component[]>, {
 });
 
 // Single SKUs - loaded from JSON (dynamic)
-// Create a proper Set-like proxy
+// Create a Set-like object that uses array for ES5 compatibility
 const createSingleSkusProxy = () => {
-  return new Proxy(new Set<string>(), {
-    get(target, prop) {
-      const set = getCurrentSingleSkus();
-      // Return methods from the actual Set
-      if (typeof prop === 'string' && typeof (set as any)[prop] === 'function') {
-        return ((set as any)[prop] as Function).bind(set);
-      }
-      return (set as any)[prop];
+  const proxy = {
+    has: (value: string): boolean => {
+      const skusArray = getCurrentSingleSkus();
+      return skusArray.indexOf(value) !== -1;
     },
-    has(target, value) {
-      const set = getCurrentSingleSkus();
-      return set.has(value as string);
+    get size(): number {
+      const skusArray = getCurrentSingleSkus();
+      return skusArray.length;
     },
-  });
+  } as Set<string>;
+  return proxy;
 };
 
 export const singleSkus = createSingleSkusProxy();
@@ -207,16 +205,14 @@ export function getProductCategory(merchantSku: string): string | undefined {
 export function hasSingleSkuCaseInsensitive(merchantSku: string): boolean {
   if (!merchantSku) return false;
   const normalized = merchantSku.toUpperCase();
-  const singleSkusSet = getCurrentSingleSkus();
+  const singleSkusArray = getCurrentSingleSkus();
   
   // First check exact match (case-sensitive) for performance
-  if (singleSkusSet.has(merchantSku)) return true;
+  if (singleSkusArray.indexOf(merchantSku) !== -1) return true;
   
-  // Then check if any SKU in the set matches when normalized
-  // Convert Set to Array for ES5 compatibility
-  const singleSkusArray = Array.from(singleSkusSet);
-  for (const sku of singleSkusArray) {
-    if (sku.toUpperCase() === normalized) {
+  // Then check if any SKU in the array matches when normalized
+  for (let i = 0; i < singleSkusArray.length; i++) {
+    if (singleSkusArray[i].toUpperCase() === normalized) {
       return true;
     }
   }
