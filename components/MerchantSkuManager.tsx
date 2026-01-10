@@ -104,11 +104,24 @@ export default function MerchantSkuManager() {
     setSuccess(null);
     try {
       const response = await fetch('/api/merchant-skus/sync', { method: 'POST' });
-      if (!response.ok) throw new Error('Failed to sync');
       const data = await response.json();
-      setSuccess(`Synced successfully! ${data.stats.comboCount} combo SKUs, ${data.stats.singleCount} single SKUs. Please refresh the page to see changes.`);
+      
+      if (!response.ok) {
+        const errorMsg = data.error || 'Failed to sync';
+        const details = data.details ? ` (${data.details})` : '';
+        throw new Error(`${errorMsg}${details}`);
+      }
+      
+      let message = `Synced successfully! ${data.stats.comboCount} combo SKUs, ${data.stats.singleCount} single SKUs.`;
+      if (data.isVercel) {
+        message += ' Note: In Vercel, the file system is read-only, so the JSON file was not updated on disk. The data is available in the database.';
+      } else {
+        message += ' Please refresh the page to see changes.';
+      }
+      setSuccess(message);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to sync to JSON');
+      const errorMessage = err instanceof Error ? err.message : 'Failed to sync to JSON';
+      setError(errorMessage);
     } finally {
       setSyncing(false);
     }
@@ -124,23 +137,29 @@ export default function MerchantSkuManager() {
     setSuccess(null);
     try {
       const response = await fetch('/api/merchant-skus/sync-from-json', { method: 'POST' });
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to sync from JSON');
-      }
       const data = await response.json();
+      
+      if (!response.ok) {
+        const errorMsg = data.error || 'Failed to sync from JSON';
+        const details = data.details ? ` (${data.details})` : '';
+        throw new Error(`${errorMsg}${details}`);
+      }
+      
       const stats = data.stats;
       let message = `Synced from JSON successfully! `;
       message += `Added: ${stats.singleAdded} single, ${stats.comboAdded} combo. `;
       message += `Updated: ${stats.singleUpdated} single, ${stats.comboUpdated} combo.`;
       if (stats.errors && stats.errors.length > 0) {
         message += ` Errors: ${stats.errors.length}`;
+        // Log errors for debugging
+        console.error('Sync errors:', stats.errors);
       }
       setSuccess(message);
       // Reload data to show updated list
       await loadData();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to sync from JSON to database');
+      const errorMessage = err instanceof Error ? err.message : 'Failed to sync from JSON to database';
+      setError(errorMessage);
     } finally {
       setSyncingFromJson(false);
     }
@@ -154,13 +173,22 @@ export default function MerchantSkuManager() {
     
     setLoading(true);
     setError(null);
+    setSuccess(null);
     try {
       const response = await fetch('/api/merchant-skus/single', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(singleForm),
       });
-      if (!response.ok) throw new Error('Failed to save');
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        const errorMsg = data.error || 'Failed to save';
+        const details = data.details ? ` (${data.details})` : '';
+        throw new Error(`${errorMsg}${details}`);
+      }
+      
       await loadData();
       await loadDropdownOptions(); // Refresh dropdowns in case new categories/classes were added
       setShowSingleForm(false);
@@ -168,7 +196,8 @@ export default function MerchantSkuManager() {
       setSingleForm({ merchant_sku: '', product_category: '', sale_class: '' });
       setSuccess('Single SKU saved successfully');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to save single SKU');
+      const errorMessage = err instanceof Error ? err.message : 'Failed to save single SKU';
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -212,13 +241,22 @@ export default function MerchantSkuManager() {
     
     setLoading(true);
     setError(null);
+    setSuccess(null);
     try {
       const response = await fetch('/api/merchant-skus/combo', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(comboForm),
       });
-      if (!response.ok) throw new Error('Failed to save');
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        const errorMsg = data.error || 'Failed to save';
+        const details = data.details ? ` (${data.details})` : '';
+        throw new Error(`${errorMsg}${details}`);
+      }
+      
       await loadData();
       await loadDropdownOptions(); // Refresh dropdowns in case new single SKUs were added
       setShowComboForm(false);
@@ -226,7 +264,8 @@ export default function MerchantSkuManager() {
       setComboForm({ merchant_sku: '', components: [] });
       setSuccess('Combo SKU saved successfully');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to save combo SKU');
+      const errorMessage = err instanceof Error ? err.message : 'Failed to save combo SKU';
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }

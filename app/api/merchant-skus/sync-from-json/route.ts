@@ -95,9 +95,26 @@ export async function POST() {
       },
     });
   } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const errorStack = error instanceof Error ? error.stack : undefined;
     console.error('Error syncing from JSON to database:', error);
+    
+    // Check for common errors
+    let userFriendlyMessage = 'Failed to sync from JSON to database';
+    if (errorMessage.includes('ENOENT') || errorMessage.includes('no such file')) {
+      userFriendlyMessage = 'merchantSkus.json file not found';
+    } else if (errorMessage.includes('Unexpected token') || errorMessage.includes('JSON')) {
+      userFriendlyMessage = 'Invalid JSON format in merchantSkus.json file';
+    } else if (errorMessage.includes('connection') || errorMessage.includes('timeout')) {
+      userFriendlyMessage = 'Database connection error. Please try again.';
+    }
+    
     return NextResponse.json(
-      { error: 'Failed to sync from JSON to database', details: error instanceof Error ? error.message : 'Unknown error' },
+      { 
+        error: userFriendlyMessage,
+        details: errorMessage,
+        ...(process.env.NODE_ENV === 'development' && { stack: errorStack })
+      },
       { status: 500 }
     );
   }

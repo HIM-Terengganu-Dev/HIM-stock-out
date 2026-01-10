@@ -14,6 +14,29 @@ export async function POST(request: NextRequest) {
       );
     }
     
+    if (components.length === 0) {
+      return NextResponse.json(
+        { error: 'At least one component is required' },
+        { status: 400 }
+      );
+    }
+    
+    // Validate components structure
+    for (const component of components) {
+      if (!component.component_merchant_sku) {
+        return NextResponse.json(
+          { error: 'Each component must have a component_merchant_sku' },
+          { status: 400 }
+        );
+      }
+      if (!component.qty || component.qty < 1) {
+        return NextResponse.json(
+          { error: 'Each component must have a quantity of at least 1' },
+          { status: 400 }
+        );
+      }
+    }
+    
     const pool = getDbPool();
     const componentsJson = JSON.stringify(components);
     
@@ -29,9 +52,28 @@ export async function POST(request: NextRequest) {
     
     return NextResponse.json({ success: true });
   } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const errorStack = error instanceof Error ? error.stack : undefined;
     console.error('Error saving combo SKU:', error);
+    
+    // Check for common database errors
+    let userFriendlyMessage = 'Failed to save combo SKU';
+    if (errorMessage.includes('duplicate key')) {
+      userFriendlyMessage = 'Merchant SKU already exists';
+    } else if (errorMessage.includes('invalid input syntax for type jsonb')) {
+      userFriendlyMessage = 'Invalid components format';
+    } else if (errorMessage.includes('null value')) {
+      userFriendlyMessage = 'Required field is missing';
+    } else if (errorMessage.includes('connection') || errorMessage.includes('timeout')) {
+      userFriendlyMessage = 'Database connection error. Please try again.';
+    }
+    
     return NextResponse.json(
-      { error: 'Failed to save combo SKU' },
+      { 
+        error: userFriendlyMessage,
+        details: errorMessage,
+        ...(process.env.NODE_ENV === 'development' && { stack: errorStack })
+      },
       { status: 500 }
     );
   }
