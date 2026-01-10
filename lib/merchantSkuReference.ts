@@ -202,4 +202,40 @@ export function getProductCategory(merchantSku: string): string | undefined {
   return categories[merchantSku];
 }
 
+// Case-insensitive helper functions for checking SKUs
+// These check if a SKU exists in the reference data regardless of case
+export function hasSingleSkuCaseInsensitive(merchantSku: string): boolean {
+  if (!merchantSku) return false;
+  const normalized = merchantSku.toUpperCase();
+  const singleSkusSet = getCurrentSingleSkus();
+  
+  // First check exact match (case-sensitive) for performance
+  if (singleSkusSet.has(merchantSku)) return true;
+  
+  // Then check if any SKU in the set matches when normalized
+  for (const sku of singleSkusSet) {
+    if (sku.toUpperCase() === normalized) {
+      return true;
+    }
+  }
+  return false;
+}
+
+export function hasComboSkuCaseInsensitive(merchantSku: string): boolean {
+  if (!merchantSku) return false;
+  const normalized = merchantSku.toUpperCase();
+  const comboSkus = getCurrentComboSkus();
+  
+  // First check exact match (case-sensitive) for performance
+  if (merchantSku in comboSkus) return true;
+  
+  // Then check if any key matches when normalized
+  for (const sku in comboSkus) {
+    if (sku.toUpperCase() === normalized) {
+      return true;
+    }
+  }
+  return false;
+}
+
 

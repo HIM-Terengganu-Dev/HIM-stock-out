@@ -1,4 +1,4 @@
-import { comboSkus, singleSkus, getProductCategory, isComboSku, getComboSkuComponents } from './merchantSkuReference';
+import { comboSkus, singleSkus, getProductCategory, isComboSku, getComboSkuComponents, hasComboSkuCaseInsensitive, hasSingleSkuCaseInsensitive } from './merchantSkuReference';
 
 export interface OrderRow {
   [key: string]: any;
@@ -601,10 +601,10 @@ export function findMissingMerchantSkus(orders: OrderRow[]): MissingMerchantSku[
   for (const key of marketplaceSkuArray) {
     const [marketplace, merchantSku] = key.split('|');
     
-    // Check if SKU is in comboSkus
-    const isComboSku = merchantSku in comboSkus;
-    // Check if SKU is in singleSkus
-    const isSingleSku = singleSkus.has(merchantSku);
+    // Use case-insensitive checks to handle variations like "CAL26" vs "cal26"
+    // This ensures SKUs are found regardless of case differences between orders and reference data
+    const isComboSku = hasComboSkuCaseInsensitive(merchantSku);
+    const isSingleSku = hasSingleSkuCaseInsensitive(merchantSku);
     
     // If it's not in either, it's missing
     if (!isComboSku && !isSingleSku) {
