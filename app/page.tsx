@@ -82,38 +82,39 @@ export default function Home() {
     return getDateRange(excludingCanceled);
   };
 
+  // Helper function to format date range from user's filter
+  const formatUserDateRange = (): string => {
+    if (!dateRange.start && !dateRange.end) {
+      return '';
+    }
+    
+    const formatDate = (date: Date) => {
+      return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+    };
+    
+    if (dateRange.start && dateRange.end) {
+      if (dateRange.start.getTime() === dateRange.end.getTime()) {
+        return formatDate(dateRange.start);
+      }
+      return `${formatDate(dateRange.start)} - ${formatDate(dateRange.end)}`;
+    } else if (dateRange.start) {
+      return `From ${formatDate(dateRange.start)}`;
+    } else if (dateRange.end) {
+      return `Until ${formatDate(dateRange.end)}`;
+    }
+    
+    return '';
+  };
+
   const getReport2DateRange = () => {
-    const TARGET_MARKETPLACES = ['TikTok', 'Shopee', 'Lazada'];
-    
-    // Apply date filter using Completed Time for Report 2
-    const dateFiltered = dateRange.start || dateRange.end
-      ? filterByDateRange(filteredOrders, dateRange.start, dateRange.end, 'Completed Time')
-      : filteredOrders;
-    
-    const filtered = dateFiltered.filter(order =>
-      TARGET_MARKETPLACES.includes(order['Marketplace'] || '')
-    );
-    const completed = filtered.filter(order => order['Marketplace Status'] === 'Completed');
-    return getDateRange(completed);
+    // For Report 2, show the user's selected date range (filtered by Completed Time)
+    return formatUserDateRange();
   };
 
   const getReport3DateRange = (marketplace: string) => {
-    const CANCELED_STATUSES = ['Canceled', 'Cancelled', 'Cancellation'];
-    const TARGET_MARKETPLACES = ['TikTok', 'Shopee', 'Lazada'];
-    
-    // Apply date filter first
-    const dateFiltered = dateRange.start || dateRange.end
-      ? filterByDateRange(filteredOrders, dateRange.start, dateRange.end, 'Order Time')
-      : filteredOrders;
-    
-    const filtered = dateFiltered.filter(order =>
-      TARGET_MARKETPLACES.includes(order['Marketplace'] || '')
-    );
-    const excludingCanceled = filtered.filter(order =>
-      !CANCELED_STATUSES.includes(order['Marketplace Status'] || '')
-    );
-    const marketplaceOrders = excludingCanceled.filter(order => order['Marketplace'] === marketplace);
-    return getDateRange(marketplaceOrders);
+    // For Report 3, show the user's selected date range (filtered by Order Time)
+    // This is called per marketplace, but the date range is the same for all
+    return formatUserDateRange();
   };
 
   const getReport4DateRange = () => {
@@ -271,7 +272,7 @@ export default function Home() {
               {activeTab === 'report2' && (
                 <ReportContainer
                   title="Report 2: All Marketplace (Status = Completed)"
-                  dateRange={getReport2DateRange()}
+                  dateRange={getReport2DateRange() || undefined}
                   data={report2}
                   onExport={handleExportReport2}
                 />
@@ -279,31 +280,34 @@ export default function Home() {
 
               {activeTab === 'report3' && (
                 <div className="space-y-8">
-                  <div className="flex justify-between items-center mb-4">
-                    <h2 className="text-xl font-semibold">Report 3: Grouped by Marketplace</h2>
-                    {getReport3DateRange(Object.keys(report3)[0] || '') && (
-                      <p className="text-sm text-gray-500">Range: {getReport3DateRange(Object.keys(report3)[0] || '')}</p>
-                    )}
-                  </div>
-                  {Object.entries(report3).map(([marketplace, data]) => (
-                    <div key={marketplace} className="border-t pt-6 first:border-0 first:pt-0">
-                      <div className="flex justify-between items-center mb-4">
-                        <h3 className="text-lg font-medium text-gray-900">{marketplace}</h3>
-                        <button
-                          onClick={() => handleExportReport3(marketplace)}
-                          className="text-sm text-blue-600 hover:text-blue-800"
-                        >
-                          Export CSV
-                        </button>
+                  <h2 className="text-xl font-semibold mb-4">Report 3: Grouped by Marketplace</h2>
+                  {Object.entries(report3).map(([marketplace, data]) => {
+                    const marketplaceDateRange = getReport3DateRange(marketplace);
+                    return (
+                      <div key={marketplace} className="border-t pt-6 first:border-0 first:pt-0">
+                        <div className="flex justify-between items-center mb-4">
+                          <div>
+                            <h3 className="text-lg font-medium text-gray-900">{marketplace}</h3>
+                            {marketplaceDateRange && (
+                              <p className="text-sm text-gray-500 mt-1">Date Range: {marketplaceDateRange}</p>
+                            )}
+                          </div>
+                          <button
+                            onClick={() => handleExportReport3(marketplace)}
+                            className="text-sm text-blue-600 hover:text-blue-800"
+                          >
+                            Export CSV
+                          </button>
+                        </div>
+                        <ReportContainer
+                          title=""
+                          data={data}
+                          onExport={() => { }}
+                          hideExportButton
+                        />
                       </div>
-                      <ReportContainer
-                        title=""
-                        data={data}
-                        onExport={() => { }}
-                        hideExportButton
-                      />
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
 
