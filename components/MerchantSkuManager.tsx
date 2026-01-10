@@ -30,8 +30,6 @@ export default function MerchantSkuManager() {
   const [singleSkus, setSingleSkus] = useState<SingleSku[]>([]);
   const [comboSkus, setComboSkus] = useState<ComboSku[]>([]);
   const [loading, setLoading] = useState(false);
-  const [syncing, setSyncing] = useState(false);
-  const [syncingFromJson, setSyncingFromJson] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   
@@ -95,73 +93,6 @@ export default function MerchantSkuManager() {
       setError(err instanceof Error ? err.message : 'Failed to load merchant SKUs');
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleSync = async () => {
-    setSyncing(true);
-    setError(null);
-    setSuccess(null);
-    try {
-      const response = await fetch('/api/merchant-skus/sync', { method: 'POST' });
-      const data = await response.json();
-      
-      if (!response.ok) {
-        const errorMsg = data.error || 'Failed to sync';
-        const details = data.details ? ` (${data.details})` : '';
-        throw new Error(`${errorMsg}${details}`);
-      }
-      
-      let message = `Synced successfully! ${data.stats.comboCount} combo SKUs, ${data.stats.singleCount} single SKUs.`;
-      if (data.isVercel) {
-        message += ' Note: In Vercel, the file system is read-only, so the JSON file was not updated on disk. The data is available in the database.';
-      } else {
-        message += ' Please refresh the page to see changes.';
-      }
-      setSuccess(message);
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to sync to JSON';
-      setError(errorMessage);
-    } finally {
-      setSyncing(false);
-    }
-  };
-
-  const handleSyncFromJson = async () => {
-    if (!confirm('This will update the database with JSON data (upsert only - will add/update, never delete existing entries). Continue?')) {
-      return;
-    }
-    
-    setSyncingFromJson(true);
-    setError(null);
-    setSuccess(null);
-    try {
-      const response = await fetch('/api/merchant-skus/sync-from-json', { method: 'POST' });
-      const data = await response.json();
-      
-      if (!response.ok) {
-        const errorMsg = data.error || 'Failed to sync from JSON';
-        const details = data.details ? ` (${data.details})` : '';
-        throw new Error(`${errorMsg}${details}`);
-      }
-      
-      const stats = data.stats;
-      let message = `Synced from JSON successfully! `;
-      message += `Added: ${stats.singleAdded} single, ${stats.comboAdded} combo. `;
-      message += `Updated: ${stats.singleUpdated} single, ${stats.comboUpdated} combo.`;
-      if (stats.errors && stats.errors.length > 0) {
-        message += ` Errors: ${stats.errors.length}`;
-        // Log errors for debugging
-        console.error('Sync errors:', stats.errors);
-      }
-      setSuccess(message);
-      // Reload data to show updated list
-      await loadData();
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to sync from JSON to database';
-      setError(errorMessage);
-    } finally {
-      setSyncingFromJson(false);
     }
   };
 
@@ -330,16 +261,7 @@ export default function MerchantSkuManager() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold text-gray-900">Merchant SKU Management</h2>
-        <div className="flex gap-2">
-          <button
-            onClick={handleSync}
-            disabled={syncing || syncingFromJson}
-            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-gray-400"
-            title="Sync database to JSON file"
-          >
-            {syncing ? 'Syncing...' : 'Sync with Database'}
-          </button>
-        </div>
+        <p className="text-sm text-gray-500">All data is saved directly to the database. No file sync needed.</p>
       </div>
 
       {error && (
