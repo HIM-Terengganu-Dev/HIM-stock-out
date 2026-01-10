@@ -213,7 +213,9 @@ export function hasSingleSkuCaseInsensitive(merchantSku: string): boolean {
   if (singleSkusSet.has(merchantSku)) return true;
   
   // Then check if any SKU in the set matches when normalized
-  for (const sku of singleSkusSet) {
+  // Convert Set to Array for ES5 compatibility
+  const singleSkusArray = Array.from(singleSkusSet);
+  for (const sku of singleSkusArray) {
     if (sku.toUpperCase() === normalized) {
       return true;
     }
