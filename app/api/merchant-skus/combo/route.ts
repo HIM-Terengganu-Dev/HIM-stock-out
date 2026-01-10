@@ -38,17 +38,19 @@ export async function POST(request: NextRequest) {
     }
     
     const pool = getDbPool();
+    const merchant_sku_norm = merchant_sku.toUpperCase();
     const componentsJson = JSON.stringify(components);
     
-    // Upsert (insert or update) - merchant_sku_norm is auto-calculated by database
+    // Upsert (insert or update) - explicitly set merchant_sku_norm
     await pool.query(`
-      INSERT INTO ref_sku.merchant_sku_combo (merchant_sku, components)
-      VALUES ($1, $2::jsonb)
+      INSERT INTO ref_sku.merchant_sku_combo (merchant_sku, merchant_sku_norm, components)
+      VALUES ($1, $2, $3::jsonb)
       ON CONFLICT (merchant_sku) 
       DO UPDATE SET 
+        merchant_sku_norm = EXCLUDED.merchant_sku_norm,
         components = EXCLUDED.components,
         updated_at = NOW()
-    `, [merchant_sku, componentsJson]);
+    `, [merchant_sku, merchant_sku_norm, componentsJson]);
     
     return NextResponse.json({ success: true });
   } catch (error) {
