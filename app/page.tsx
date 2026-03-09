@@ -176,26 +176,46 @@ export default function Home() {
       setOrders(parsedOrders);
       setFilteredOrders(parsedOrders);
 
-      // Save the orders to the database
+      // Save the orders to the database in chunks to avoid Vercel body size limits
       const batchId = crypto.randomUUID();
+      const CHUNK_SIZE = 1000;
       try {
-        const uploadResponse = await fetch('/api/orders/upload', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ batchId, orders: parsedOrders }),
-        });
+        // Split into chunks of 1000 rows each
+        const chunks: typeof parsedOrders[] = [];
+        for (let i = 0; i < parsedOrders.length; i += CHUNK_SIZE) {
+          chunks.push(parsedOrders.slice(i, i + CHUNK_SIZE));
+        }
 
-        if (!uploadResponse.ok) {
-          const errorData = await uploadResponse.json();
-          console.error('Failed to save to database:', errorData.error);
-          setDbSaveStatus({ ok: false, message: `Failed to save to database: ${errorData.error || 'Unknown error'}` });
+        // Upload all chunks in parallel (same batchId links them as one upload)
+        const results = await Promise.allSettled(
+          chunks.map(chunk =>
+            fetch('/api/orders/upload', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ batchId, orders: chunk }),
+            }).then(res => res.ok ? res.json() : res.json().then(e => Promise.reject(e)))
+          )
+        );
+
+        const succeeded = results.filter(r => r.status === 'fulfilled');
+        const failed = results.filter(r => r.status === 'rejected');
+        const totalSaved = succeeded.reduce((sum, r) => sum + ((r as PromiseFulfilledResult<any>).value?.count ?? 0), 0);
+
+        if (failed.length === 0) {
+          setDbSaveStatus({ ok: true, message: `✅ Saved ${totalSaved} rows to database (${chunks.length} chunk${chunks.length > 1 ? 's' : ''})` });
+        } else if (succeeded.length > 0) {
+          setDbSaveStatus({ ok: false, message: `⚠️ Partial save: ${totalSaved} rows saved, ${failed.length} chunk(s) failed` });
         } else {
-          const successData = await uploadResponse.json();
-          setDbSaveStatus({ ok: true, message: `✅ Saved ${successData.count} rows to database successfully!` });
+          const firstErr = (failed[0] as PromiseRejectedResult).reason;
+          setDbSaveStatus({ ok: false, message: `❌ Failed to save: ${firstErr?.error || 'Unknown error'}` });
+        }
+
+        if (succeeded.length > 0) {
           setPastRecordsRefreshKey(prev => prev + 1);
         }
       } catch (uploadObjErr) {
         console.error('Error saving to database:', uploadObjErr);
+        setDbSaveStatus({ ok: false, message: `❌ Network error while saving to database` });
       }
 
       // Generate all reports with current date range
