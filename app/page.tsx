@@ -10,6 +10,7 @@ import ReportContainer from '@/components/ReportContainer';
 import MerchantSkuManager from '@/components/MerchantSkuManager';
 import SkuNotification from '@/components/SkuNotification';
 import DateRangePicker from '@/components/DateRangePicker';
+import PastRecordsView from '@/components/PastRecordsView';
 
 export default function Home() {
   const [orders, setOrders] = useState<OrderRow[]>([]);
@@ -67,12 +68,12 @@ export default function Home() {
   const getReport1DateRange = () => {
     const TARGET_MARKETPLACES = ['TikTok', 'Shopee', 'Lazada'];
     const CANCELED_STATUSES = ['Canceled', 'Cancelled', 'Cancellation'];
-    
+
     // Apply date filter first
     const dateFiltered = dateRange.start || dateRange.end
       ? filterByDateRange(filteredOrders, dateRange.start, dateRange.end, 'Order Time')
       : filteredOrders;
-    
+
     const filtered = dateFiltered.filter(order =>
       TARGET_MARKETPLACES.includes(order['Marketplace'] || '')
     );
@@ -87,11 +88,11 @@ export default function Home() {
     if (!dateRange.start && !dateRange.end) {
       return '';
     }
-    
+
     const formatDate = (date: Date) => {
       return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
     };
-    
+
     if (dateRange.start && dateRange.end) {
       if (dateRange.start.getTime() === dateRange.end.getTime()) {
         return formatDate(dateRange.start);
@@ -102,7 +103,7 @@ export default function Home() {
     } else if (dateRange.end) {
       return `Until ${formatDate(dateRange.end)}`;
     }
-    
+
     return '';
   };
 
@@ -120,12 +121,12 @@ export default function Home() {
   const getReport4DateRange = () => {
     const TARGET_MARKETPLACES = ['TikTok', 'Shopee', 'Lazada'];
     const CANCELED_STATUSES = ['Canceled', 'Cancelled', 'Cancellation'];
-    
+
     // Apply date filter first
     const dateFiltered = dateRange.start || dateRange.end
       ? filterByDateRange(filteredOrders, dateRange.start, dateRange.end, 'Order Time')
       : filteredOrders;
-    
+
     const filtered = dateFiltered.filter(order =>
       TARGET_MARKETPLACES.includes(order['Marketplace'] || '')
     );
@@ -138,12 +139,12 @@ export default function Home() {
   const getBreakdownDateRange = () => {
     const TARGET_MARKETPLACES = ['TikTok', 'Shopee', 'Lazada'];
     const CANCELED_STATUSES = ['Canceled', 'Cancelled', 'Cancellation'];
-    
+
     // Apply date filter first
     const dateFiltered = dateRange.start || dateRange.end
       ? filterByDateRange(filteredOrders, dateRange.start, dateRange.end, 'Order Time')
       : filteredOrders;
-    
+
     const filtered = dateFiltered.filter(order =>
       TARGET_MARKETPLACES.includes(order['Marketplace'] || '')
     );
@@ -172,6 +173,24 @@ export default function Home() {
       const parsedOrders = await parseExcelFile(file);
       setOrders(parsedOrders);
       setFilteredOrders(parsedOrders);
+
+      // Save the orders to the database
+      const batchId = crypto.randomUUID();
+      try {
+        const uploadResponse = await fetch('/api/orders/upload', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ batchId, orders: parsedOrders }),
+        });
+
+        if (!uploadResponse.ok) {
+          const errorData = await uploadResponse.json();
+          console.error('Failed to save to database:', errorData.error);
+          // We can optionally show a warning, but we still want to show reports based on client state
+        }
+      } catch (uploadObjErr) {
+        console.error('Error saving to database:', uploadObjErr);
+      }
 
       // Generate all reports with current date range
       generateAllReports(parsedOrders, dateRange);
@@ -223,6 +242,7 @@ export default function Home() {
     { id: 'report4', label: 'Report 4: Detailed' },
     { id: 'breakdown', label: 'Breakdown' },
     { id: 'manage', label: 'Manage SKUs' },
+    { id: 'past_records', label: 'Past Records' },
   ];
 
   return (
@@ -234,12 +254,12 @@ export default function Home() {
         <div className="flex gap-6 mb-8">
           {/* Left side - Notification area (25%) */}
           {showNotification && (
-            <SkuNotification 
-              missingSkus={missingMerchantSkus} 
+            <SkuNotification
+              missingSkus={missingMerchantSkus}
               onClose={() => setShowNotification(false)}
             />
           )}
-          
+
           {/* Right side - File Upload (75%) */}
           <div className={`${showNotification ? 'w-3/4' : 'w-full'}`}>
             <FileUpload onFileUpload={handleFileUpload} loading={loading} />
@@ -260,102 +280,114 @@ export default function Home() {
           <ReportTabs activeTab={activeTab} onTabChange={setActiveTab} tabs={tabs} />
 
           <div className="bg-white rounded-lg shadow min-h-[400px] p-6">
-              {activeTab === 'report1' && (
-                <ReportContainer
-                  title="Report 1: All Marketplace (Excluding Canceled)"
-                  dateRange={getReport1DateRange()}
-                  data={report1}
-                  onExport={handleExportReport1}
-                />
-              )}
+            {activeTab === 'report1' && (
+              <ReportContainer
+                title="Report 1: All Marketplace (Excluding Canceled)"
+                dateRange={getReport1DateRange()}
+                data={report1}
+                onExport={handleExportReport1}
+              />
+            )}
 
-              {activeTab === 'report2' && (
-                <ReportContainer
-                  title="Report 2: All Marketplace (Status = Completed)"
-                  dateRange={getReport2DateRange() || undefined}
-                  data={report2}
-                  onExport={handleExportReport2}
-                />
-              )}
+            {activeTab === 'report2' && (
+              <ReportContainer
+                title="Report 2: All Marketplace (Status = Completed)"
+                dateRange={getReport2DateRange() || undefined}
+                data={report2}
+                onExport={handleExportReport2}
+              />
+            )}
 
-              {activeTab === 'report3' && (
-                <div className="space-y-8">
-                  <h2 className="text-xl font-semibold mb-4">Report 3: Grouped by Marketplace</h2>
-                  {Object.entries(report3).map(([marketplace, data]) => {
-                    const marketplaceDateRange = getReport3DateRange(marketplace);
-                    return (
-                      <div key={marketplace} className="border-t pt-6 first:border-0 first:pt-0">
-                        <div className="flex justify-between items-center mb-4">
-                          <div>
-                            <h3 className="text-lg font-medium text-gray-900">{marketplace}</h3>
-                            {marketplaceDateRange && (
-                              <p className="text-sm text-gray-500 mt-1">Date Range: {marketplaceDateRange}</p>
-                            )}
-                          </div>
-                          <button
-                            onClick={() => handleExportReport3(marketplace)}
-                            className="text-sm text-blue-600 hover:text-blue-800"
-                          >
-                            Export CSV
-                          </button>
+            {activeTab === 'report3' && (
+              <div className="space-y-8">
+                <h2 className="text-xl font-semibold mb-4">Report 3: Grouped by Marketplace</h2>
+                {Object.entries(report3).map(([marketplace, data]) => {
+                  const marketplaceDateRange = getReport3DateRange(marketplace);
+                  return (
+                    <div key={marketplace} className="border-t pt-6 first:border-0 first:pt-0">
+                      <div className="flex justify-between items-center mb-4">
+                        <div>
+                          <h3 className="text-lg font-medium text-gray-900">{marketplace}</h3>
+                          {marketplaceDateRange && (
+                            <p className="text-sm text-gray-500 mt-1">Date Range: {marketplaceDateRange}</p>
+                          )}
                         </div>
-                        <ReportContainer
-                          title=""
-                          data={data}
-                          onExport={() => { }}
-                          hideExportButton
-                        />
+                        <button
+                          onClick={() => handleExportReport3(marketplace)}
+                          className="text-sm text-blue-600 hover:text-blue-800"
+                        >
+                          Export CSV
+                        </button>
                       </div>
-                    );
-                  })}
-                </div>
-              )}
+                      <ReportContainer
+                        title=""
+                        data={data}
+                        onExport={() => { }}
+                        hideExportButton
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+            )}
 
-              {activeTab === 'report4' && report4 && (
-                <ReportContainer
-                  title="Report 4: Detailed Stock-Out by Marketplace"
-                  dateRange={getReport4DateRange()}
-                  data={report4.summary}
-                  onExport={handleExportReport4}
-                  visualsEnabled={true}
-                // Note: Report 4 has a complex 'detailed' view that we are simplifying to summary for the Visual view passed here.
-                // The original Report 4 table had a specific layout. 
-                // For now, reusing ReportContainer with summary data for visuals.
-                // The original specific table implementation for Report 4 might be desired for the "Table" view.
-                // However, for this task, standardizing on ReportContainer is cleaner for now.
-                // If we need the specific toggle for merchant SKU in Report 4, we might need to customize ReportContainer later.
-                // For now, using the summary data which works for both table and visuals.
-                />
-              )}
+            {activeTab === 'report4' && report4 && (
+              <ReportContainer
+                title="Report 4: Detailed Stock-Out by Marketplace"
+                dateRange={getReport4DateRange()}
+                data={report4.summary}
+                onExport={handleExportReport4}
+                visualsEnabled={true}
+              // Note: Report 4 has a complex 'detailed' view that we are simplifying to summary for the Visual view passed here.
+              // The original Report 4 table had a specific layout. 
+              // For now, reusing ReportContainer with summary data for visuals.
+              // The original specific table implementation for Report 4 might be desired for the "Table" view.
+              // However, for this task, standardizing on ReportContainer is cleaner for now.
+              // If we need the specific toggle for merchant SKU in Report 4, we might need to customize ReportContainer later.
+              // For now, using the summary data which works for both table and visuals.
+              />
+            )}
 
-              {activeTab === 'breakdown' && (
-                // Breakdown is data-heavy and flat, visuals might be less useful or need specific grouping.
-                // Enabling visuals regardless as per request "new tab for every report".
-                <ReportContainer
-                  title="Breakdown Report: By Marketplace and Merchant SKU"
-                  dateRange={getBreakdownDateRange()}
-                  data={breakdownReport.map(item => ({
-                    // Mapping for ReportDisplay compatibility
-                    marketplace: item.marketplace,
-                    merchant_sku: item.merchant_sku_order_item, // Show the order item SKU
-                    product_category: item.product_category,
-                    stock_out_quantity: item.total_merchandise_quantity
-                  }))}
-                  onExport={handleExportBreakdown}
-                />
-              )}
+            {activeTab === 'breakdown' && (
+              // Breakdown is data-heavy and flat, visuals might be less useful or need specific grouping.
+              // Enabling visuals regardless as per request "new tab for every report".
+              <ReportContainer
+                title="Breakdown Report: By Marketplace and Merchant SKU"
+                dateRange={getBreakdownDateRange()}
+                data={breakdownReport.map(item => ({
+                  // Mapping for ReportDisplay compatibility
+                  marketplace: item.marketplace,
+                  merchant_sku: item.merchant_sku_order_item, // Show the order item SKU
+                  product_category: item.product_category,
+                  stock_out_quantity: item.total_merchandise_quantity
+                }))}
+                onExport={handleExportBreakdown}
+              />
+            )}
 
-              {activeTab === 'manage' && (
-                <MerchantSkuManager />
-              )}
+            {activeTab === 'manage' && (
+              <MerchantSkuManager />
+            )}
 
-              {activeTab !== 'manage' && orders.length === 0 && (
-                <div className="text-center py-12 text-gray-500">
-                  <p>Please upload an Excel file to view reports</p>
-                </div>
-              )}
-            </div>
+            {activeTab === 'past_records' && (
+              <PastRecordsView
+                onLoadRecord={(loadedOrders) => {
+                  setOrders(loadedOrders);
+                  setFilteredOrders(loadedOrders);
+                  generateAllReports(loadedOrders, { start: null, end: null });
+                  setDateRange({ start: null, end: null });
+                  setActiveTab('report1');
+                }}
+              />
+            )}
+
+            {activeTab !== 'manage' && activeTab !== 'past_records' && orders.length === 0 && (
+              <div className="text-center py-12 text-gray-500">
+                <p>Please upload an Excel file or select a past record to view reports</p>
+              </div>
+            )}
           </div>
+        </div>
       </div>
     </div>
   );
