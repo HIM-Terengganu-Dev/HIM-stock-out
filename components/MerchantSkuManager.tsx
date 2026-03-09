@@ -333,33 +333,35 @@ export default function MerchantSkuManager() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Product Category *</label>
-                  <select
+                  <input
+                    type="text"
+                    list="productCategoriesList"
+                    placeholder="Select or Type Product Category"
                     value={singleForm.product_category}
                     onChange={(e) => setSingleForm({ ...singleForm, product_category: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded"
-                  >
-                    <option value="">Select Product Category</option>
+                  />
+                  <datalist id="productCategoriesList">
                     {productCategories.map((cat) => (
-                      <option key={cat} value={cat}>
-                        {cat}
-                      </option>
+                      <option key={cat} value={cat} />
                     ))}
-                  </select>
+                  </datalist>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Sale Class</label>
-                  <select
+                  <input
+                    type="text"
+                    list="saleClassesList"
+                    placeholder="Select or Type Sale Class (Optional)"
                     value={singleForm.sale_class}
                     onChange={(e) => setSingleForm({ ...singleForm, sale_class: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded"
-                  >
-                    <option value="">Select Sale Class (Optional)</option>
+                  />
+                  <datalist id="saleClassesList">
                     {saleClasses.map((saleClass) => (
-                      <option key={saleClass} value={saleClass}>
-                        {saleClass}
-                      </option>
+                      <option key={saleClass} value={saleClass} />
                     ))}
-                  </select>
+                  </datalist>
                 </div>
               </div>
               <div className="mt-4 flex gap-2">
