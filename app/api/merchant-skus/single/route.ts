@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { NextRequest, NextResponse } from 'next/server';
 import { getDbPool } from '@/lib/db';
 
@@ -6,17 +8,17 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const { merchant_sku, product_category, sale_class } = body;
-    
+
     if (!merchant_sku || !product_category) {
       return NextResponse.json(
         { error: 'merchant_sku and product_category are required' },
         { status: 400 }
       );
     }
-    
+
     const pool = getDbPool();
     const merchant_sku_norm = merchant_sku.toUpperCase();
-    
+
     // Upsert (insert or update) - explicitly set merchant_sku_norm
     await pool.query(`
       INSERT INTO ref_sku.merchant_sku_single (merchant_sku, merchant_sku_norm, product_category, sale_class)
@@ -28,13 +30,13 @@ export async function POST(request: NextRequest) {
         sale_class = EXCLUDED.sale_class,
         updated_at = NOW()
     `, [merchant_sku, merchant_sku_norm, product_category, sale_class || null]);
-    
+
     return NextResponse.json({ success: true });
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     const errorStack = error instanceof Error ? error.stack : undefined;
     console.error('Error saving single SKU:', error);
-    
+
     // Check for common database errors
     let userFriendlyMessage = 'Failed to save single SKU';
     if (errorMessage.includes('duplicate key')) {
@@ -46,9 +48,9 @@ export async function POST(request: NextRequest) {
     } else if (errorMessage.includes('connection') || errorMessage.includes('timeout')) {
       userFriendlyMessage = 'Database connection error. Please try again.';
     }
-    
+
     return NextResponse.json(
-      { 
+      {
         error: userFriendlyMessage,
         details: errorMessage,
         ...(process.env.NODE_ENV === 'development' && { stack: errorStack })
@@ -63,20 +65,20 @@ export async function DELETE(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const merchant_sku = searchParams.get('merchant_sku');
-    
+
     if (!merchant_sku) {
       return NextResponse.json(
         { error: 'merchant_sku is required' },
         { status: 400 }
       );
     }
-    
+
     const pool = getDbPool();
     await pool.query(
       'DELETE FROM ref_sku.merchant_sku_single WHERE merchant_sku = $1',
       [merchant_sku]
     );
-    
+
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Error deleting single SKU:', error);

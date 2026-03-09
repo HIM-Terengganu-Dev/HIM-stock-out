@@ -29,7 +29,7 @@ export default function PastRecordsView({ onLoadRecord }: PastRecordsViewProps) 
     const fetchHistory = async () => {
         try {
             setLoading(true);
-            const res = await fetch('/api/orders/history');
+            const res = await fetch('/api/orders/history', { cache: 'no-store' });
             if (!res.ok) throw new Error('Failed to fetch history');
             const data = await res.json();
             setRecords(data.history || []);
@@ -45,7 +45,7 @@ export default function PastRecordsView({ onLoadRecord }: PastRecordsViewProps) 
             setLoadingBatch(batchId);
             setError(null);
 
-            const res = await fetch(`/api/orders/history/${batchId}`);
+            const res = await fetch(`/api/orders/history/${batchId}`, { cache: 'no-store' });
 
             if (!res.ok) {
                 const data = await res.json();

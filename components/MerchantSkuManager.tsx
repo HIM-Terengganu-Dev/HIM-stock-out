@@ -32,25 +32,25 @@ export default function MerchantSkuManager() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  
+
   // Dropdown options
   const [productCategories, setProductCategories] = useState<string[]>([]);
   const [saleClasses, setSaleClasses] = useState<string[]>([]);
   const [singleSkuOptions, setSingleSkuOptions] = useState<string[]>([]);
-  
+
   // Form states
   const [showSingleForm, setShowSingleForm] = useState(false);
   const [showComboForm, setShowComboForm] = useState(false);
   const [editingSingle, setEditingSingle] = useState<SingleSku | null>(null);
   const [editingCombo, setEditingCombo] = useState<ComboSku | null>(null);
-  
+
   // Single SKU form
   const [singleForm, setSingleForm] = useState({
     merchant_sku: '',
     product_category: '',
     sale_class: '',
   });
-  
+
   // Combo SKU form
   const [comboForm, setComboForm] = useState({
     merchant_sku: '',
@@ -69,7 +69,7 @@ export default function MerchantSkuManager() {
 
   const loadDropdownOptions = async () => {
     try {
-      const response = await fetch('/api/merchant-skus/dropdowns');
+      const response = await fetch('/api/merchant-skus/dropdowns', { cache: 'no-store' });
       if (!response.ok) throw new Error('Failed to load dropdown options');
       const data = await response.json();
       setProductCategories(data.productCategories || []);
@@ -84,7 +84,7 @@ export default function MerchantSkuManager() {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch('/api/merchant-skus');
+      const response = await fetch('/api/merchant-skus', { cache: 'no-store' });
       if (!response.ok) throw new Error('Failed to load data');
       const data = await response.json();
       setSingleSkus(data.single || []);
@@ -101,7 +101,7 @@ export default function MerchantSkuManager() {
       setError('Merchant SKU and Product Category are required');
       return;
     }
-    
+
     setLoading(true);
     setError(null);
     setSuccess(null);
@@ -111,15 +111,15 @@ export default function MerchantSkuManager() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(singleForm),
       });
-      
+
       const data = await response.json();
-      
+
       if (!response.ok) {
         const errorMsg = data.error || 'Failed to save';
         const details = data.details ? ` (${data.details})` : '';
         throw new Error(`${errorMsg}${details}`);
       }
-      
+
       await loadData();
       await loadDropdownOptions(); // Refresh dropdowns in case new categories/classes were added
       setShowSingleForm(false);
@@ -136,7 +136,7 @@ export default function MerchantSkuManager() {
 
   const handleDeleteSingle = async (merchant_sku: string) => {
     if (!confirm(`Delete single SKU "${merchant_sku}"?`)) return;
-    
+
     setLoading(true);
     setError(null);
     try {
@@ -169,7 +169,7 @@ export default function MerchantSkuManager() {
       setError('Merchant SKU and at least one component are required');
       return;
     }
-    
+
     setLoading(true);
     setError(null);
     setSuccess(null);
@@ -179,15 +179,15 @@ export default function MerchantSkuManager() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(comboForm),
       });
-      
+
       const data = await response.json();
-      
+
       if (!response.ok) {
         const errorMsg = data.error || 'Failed to save';
         const details = data.details ? ` (${data.details})` : '';
         throw new Error(`${errorMsg}${details}`);
       }
-      
+
       await loadData();
       await loadDropdownOptions(); // Refresh dropdowns in case new single SKUs were added
       setShowComboForm(false);
@@ -204,7 +204,7 @@ export default function MerchantSkuManager() {
 
   const handleDeleteCombo = async (merchant_sku: string) => {
     if (!confirm(`Delete combo SKU "${merchant_sku}"?`)) return;
-    
+
     setLoading(true);
     setError(null);
     try {
@@ -280,21 +280,19 @@ export default function MerchantSkuManager() {
         <nav className="-mb-px flex space-x-8">
           <button
             onClick={() => setActiveType('single')}
-            className={`py-4 px-1 border-b-2 font-medium text-sm ${
-              activeType === 'single'
+            className={`py-4 px-1 border-b-2 font-medium text-sm ${activeType === 'single'
                 ? 'border-blue-500 text-blue-600'
                 : 'border-transparent text-gray-500 hover:text-gray-700'
-            }`}
+              }`}
           >
             Single SKUs ({singleSkus.length})
           </button>
           <button
             onClick={() => setActiveType('combo')}
-            className={`py-4 px-1 border-b-2 font-medium text-sm ${
-              activeType === 'combo'
+            className={`py-4 px-1 border-b-2 font-medium text-sm ${activeType === 'combo'
                 ? 'border-blue-500 text-blue-600'
                 : 'border-transparent text-gray-500 hover:text-gray-700'
-            }`}
+              }`}
           >
             Combo SKUs ({comboSkus.length})
           </button>
@@ -464,7 +462,7 @@ export default function MerchantSkuManager() {
                   />
                 </div>
               </div>
-              
+
               <div className="mb-4">
                 <label className="block text-sm font-medium text-gray-700 mb-2">Components *</label>
                 <div className="grid grid-cols-4 gap-2 mb-2">
