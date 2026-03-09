@@ -7,6 +7,8 @@ interface PastRecord {
     batch_id: string;
     upload_timestamp: string;
     total_rows: string; // BIGINT count comes back as string from pg
+    min_date: string | null;
+    max_date: string | null;
 }
 
 interface PastRecordsViewProps {
@@ -17,6 +19,7 @@ export default function PastRecordsView({ onLoadRecord }: PastRecordsViewProps) 
     const [records, setRecords] = useState<PastRecord[]>([]);
     const [loading, setLoading] = useState(true);
     const [loadingBatch, setLoadingBatch] = useState<string | null>(null);
+    const [deletingBatch, setDeletingBatch] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
@@ -64,6 +67,50 @@ export default function PastRecordsView({ onLoadRecord }: PastRecordsViewProps) 
         }
     };
 
+    const handleDeleteRecord = async (batchId: string) => {
+        if (!confirm('Are you sure you want to delete this past record? This action cannot be undone.')) {
+            return;
+        }
+
+        try {
+            setDeletingBatch(batchId);
+            setError(null);
+
+            const res = await fetch(`/api/orders/history/${batchId}`, {
+                method: 'DELETE'
+            });
+
+            if (!res.ok) {
+                const data = await res.json();
+                throw new Error(data.error || 'Failed to delete record');
+            }
+
+            // Immediately remove from the local state so UI updates instantly
+            setRecords(prev => prev.filter(r => r.batch_id !== batchId));
+
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Unknown error');
+        } finally {
+            setDeletingBatch(null);
+        }
+    };
+
+    const formatDateRange = (minDate: string | null, maxDate: string | null) => {
+        if (!minDate && !maxDate) return 'Unknown';
+
+        const formatDate = (dateStr: string) => {
+            return new Intl.DateTimeFormat('en-GB', {
+                day: '2-digit', month: 'short', year: 'numeric'
+            }).format(new Date(dateStr));
+        };
+
+        if (minDate && maxDate) {
+            return `${formatDate(minDate)} - ${formatDate(maxDate)}`;
+        }
+
+        return minDate ? formatDate(minDate) : (maxDate ? formatDate(maxDate) : 'Unknown');
+    };
+
     if (loading) {
         return (
             <div className="flex justify-center items-center py-12">
@@ -104,6 +151,9 @@ export default function PastRecordsView({ onLoadRecord }: PastRecordsViewProps) 
                                     Upload Time
                                 </th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Date Range
+                                </th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     Total Rows
                                 </th>
                                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -118,15 +168,25 @@ export default function PastRecordsView({ onLoadRecord }: PastRecordsViewProps) 
                                         {new Date(record.upload_timestamp).toLocaleString()}
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        {formatDateRange(record.min_date, record.max_date)}
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                         {record.total_rows} orders
                                     </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
+                                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm space-x-2">
                                         <button
                                             onClick={() => handleLoadRecord(record.batch_id)}
-                                            disabled={loadingBatch === record.batch_id}
-                                            className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50"
+                                            disabled={loadingBatch === record.batch_id || deletingBatch === record.batch_id}
+                                            className="inline-flex items-center px-3 py-1.5 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50"
                                         >
                                             {loadingBatch === record.batch_id ? 'Loading...' : 'View Reports'}
+                                        </button>
+                                        <button
+                                            onClick={() => handleDeleteRecord(record.batch_id)}
+                                            disabled={loadingBatch === record.batch_id || deletingBatch === record.batch_id}
+                                            className="inline-flex items-center px-3 py-1.5 border border-red-200 rounded-md shadow-sm text-sm font-medium text-red-600 bg-red-50 hover:bg-red-100 disabled:opacity-50"
+                                        >
+                                            {deletingBatch === record.batch_id ? 'Wait...' : 'Delete'}
                                         </button>
                                     </td>
                                 </tr>

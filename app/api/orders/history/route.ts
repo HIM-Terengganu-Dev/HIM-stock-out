@@ -11,7 +11,9 @@ export async function GET() {
       SELECT 
         batch_id,
         MIN(upload_timestamp) as upload_timestamp,
-        COUNT(*) as total_rows
+        COUNT(*) as total_rows,
+        MIN(order_time) as min_date,
+        MAX(order_time) as max_date
       FROM history.uploaded_orders
       GROUP BY batch_id
       ORDER BY upload_timestamp DESC

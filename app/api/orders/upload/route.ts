@@ -24,20 +24,6 @@ export async function POST(request: NextRequest) {
         try {
             await client.query('BEGIN');
 
-            // We need to parse dates carefully since they might come in different formats
-            const insertQuery = `
-        INSERT INTO history.uploaded_orders (
-          batch_id, 
-          marketplace, 
-          merchant_sku, 
-          quantity, 
-          stock_out, 
-          marketplace_status, 
-          order_time, 
-          completed_time
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-      `;
-
             // Helper function to handle various date formats (similar to parseDate in analysis.ts)
             const safeDate = (dateVal: any) => {
                 if (!dateVal) return null;
@@ -45,35 +31,71 @@ export async function POST(request: NextRequest) {
                 return isNaN(date.getTime()) ? null : date.toISOString();
             };
 
-            // Perform bulk insert using individual parameterized queries inside the transaction
-            let insertedCount = 0;
+            // Prepare parallel arrays for the UNNEST query
+            const batchIds: string[] = [];
+            const marketplaces: (string | null)[] = [];
+            const merchantSkus: (string | null)[] = [];
+            const quantities: (number | null)[] = [];
+            const stockOuts: (string | null)[] = [];
+            const statuses: (string | null)[] = [];
+            const orderTimes: (string | null)[] = [];
+            const completedTimes: (string | null)[] = [];
 
             for (const order of orders) {
-                // Find possible date columns (falling back to common names used in the app)
                 const orderTime = order['Order Time'] || order['Order Date'] || order['Created At'] || null;
                 const completedTime = order['Completed Time'] || order['Completed Date'] || null;
-
                 const quantity = parseInt(order['Quantity'], 10);
 
-                await client.query(insertQuery, [
-                    batchId,
-                    order['Marketplace'] || null,
-                    order['Merchant SKU'] || null,
-                    isNaN(quantity) ? null : quantity,
-                    order['Stock-Out'] || null,
-                    order['Marketplace Status'] || null,
-                    safeDate(orderTime),
-                    safeDate(completedTime)
-                ]);
-
-                insertedCount++;
+                batchIds.push(batchId);
+                marketplaces.push(order['Marketplace'] || null);
+                merchantSkus.push(order['Merchant SKU'] || null);
+                quantities.push(isNaN(quantity) ? null : quantity);
+                stockOuts.push(order['Stock-Out'] || null);
+                statuses.push(order['Marketplace Status'] || null);
+                orderTimes.push(safeDate(orderTime));
+                completedTimes.push(safeDate(completedTime));
             }
+
+            // Perform a single bulk insert using PostgreSQL UNNEST
+            const insertQuery = `
+                INSERT INTO history.uploaded_orders (
+                    batch_id, 
+                    marketplace, 
+                    merchant_sku, 
+                    quantity, 
+                    stock_out, 
+                    marketplace_status, 
+                    order_time, 
+                    completed_time
+                ) 
+                SELECT * FROM UNNEST(
+                    $1::uuid[], 
+                    $2::text[], 
+                    $3::text[], 
+                    $4::int[], 
+                    $5::text[], 
+                    $6::text[], 
+                    $7::timestamptz[], 
+                    $8::timestamptz[]
+                )
+            `;
+
+            await client.query(insertQuery, [
+                batchIds,
+                marketplaces,
+                merchantSkus,
+                quantities,
+                stockOuts,
+                statuses,
+                orderTimes,
+                completedTimes
+            ]);
 
             await client.query('COMMIT');
 
             return NextResponse.json({
                 success: true,
-                count: insertedCount,
+                count: orders.length,
                 batchId
             });
 

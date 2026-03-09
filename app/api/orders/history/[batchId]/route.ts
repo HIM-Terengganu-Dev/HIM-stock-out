@@ -56,3 +56,46 @@ export async function GET(
         );
     }
 }
+
+export async function DELETE(
+    request: NextRequest,
+    { params }: { params: { batchId: string } }
+) {
+    try {
+        const batchId = params.batchId;
+
+        if (!batchId) {
+            return NextResponse.json(
+                { error: 'Batch ID is required' },
+                { status: 400 }
+            );
+        }
+
+        const pool = getDbPool();
+
+        // Delete all records for the given batch ID
+        const result = await pool.query(
+            `DELETE FROM history.uploaded_orders WHERE batch_id = $1`,
+            [batchId]
+        );
+
+        if (result.rowCount === 0) {
+            return NextResponse.json(
+                { error: 'No records found for this batch ID' },
+                { status: 404 }
+            );
+        }
+
+        return NextResponse.json({
+            success: true,
+            message: `Successfully deleted batch ${batchId}`
+        });
+
+    } catch (error) {
+        console.error('Error deleting batch:', error);
+        return NextResponse.json(
+            { error: 'Failed to delete batch records' },
+            { status: 500 }
+        );
+    }
+}
