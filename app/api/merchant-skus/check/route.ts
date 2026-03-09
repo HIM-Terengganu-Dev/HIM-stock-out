@@ -4,8 +4,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getDbPool } from '@/lib/db';
 
 // Mark route as dynamic since it uses request parameters
-export const dynamic = 'force-dynamic';
-
 // GET - Check if a SKU exists (case-insensitive)
 export async function GET(request: NextRequest) {
   try {
