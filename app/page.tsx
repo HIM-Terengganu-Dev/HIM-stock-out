@@ -31,6 +31,7 @@ export default function Home() {
   const [showNotification, setShowNotification] = useState(false);
   const [dateRange, setDateRange] = useState<{ start: Date | null, end: Date | null }>({ start: null, end: null });
   const [pastRecordsRefreshKey, setPastRecordsRefreshKey] = useState(0);
+  const [dbSaveStatus, setDbSaveStatus] = useState<{ ok: boolean; message: string } | null>(null);
 
   // Function to generate all reports with current date range
   const generateAllReports = useCallback((orders: OrderRow[], dateRange: { start: Date | null, end: Date | null }) => {
@@ -187,9 +188,10 @@ export default function Home() {
         if (!uploadResponse.ok) {
           const errorData = await uploadResponse.json();
           console.error('Failed to save to database:', errorData.error);
-          setError(`Warning: File processed but failed to save to database: ${errorData.error || 'Unknown error'}`);
+          setDbSaveStatus({ ok: false, message: `Failed to save to database: ${errorData.error || 'Unknown error'}` });
         } else {
-          // Bump the refresh key so Past Records re-fetches on next visit
+          const successData = await uploadResponse.json();
+          setDbSaveStatus({ ok: true, message: `✅ Saved ${successData.count} rows to database successfully!` });
           setPastRecordsRefreshKey(prev => prev + 1);
         }
       } catch (uploadObjErr) {
@@ -273,6 +275,22 @@ export default function Home() {
         {error && (
           <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
             {error}
+          </div>
+        )}
+
+        {/* DB Save Toast Notification */}
+        {dbSaveStatus && (
+          <div
+            className={`fixed bottom-6 right-6 z-50 flex items-center gap-3 px-5 py-4 rounded-xl shadow-xl text-white text-sm font-medium transition-all ${dbSaveStatus.ok ? 'bg-green-500' : 'bg-red-500'
+              }`}
+          >
+            <span>{dbSaveStatus.message}</span>
+            <button
+              onClick={() => setDbSaveStatus(null)}
+              className="ml-2 text-white/80 hover:text-white font-bold"
+            >
+              ✕
+            </button>
           </div>
         )}
 

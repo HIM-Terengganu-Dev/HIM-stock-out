@@ -10,6 +10,8 @@ export function getDbPool(): Pool {
     }
     pool = new Pool({
       connectionString,
+      ssl: connectionString.includes('localhost') ? false : { rejectUnauthorized: false },
+      max: 5,
     });
   }
   return pool;
