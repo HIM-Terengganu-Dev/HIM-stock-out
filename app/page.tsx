@@ -30,6 +30,7 @@ export default function Home() {
   const [activeTab, setActiveTab] = useState('summary');
   const [showNotification, setShowNotification] = useState(false);
   const [dateRange, setDateRange] = useState<{ start: Date | null, end: Date | null }>({ start: null, end: null });
+  const [pastRecordsRefreshKey, setPastRecordsRefreshKey] = useState(0);
 
   // Function to generate all reports with current date range
   const generateAllReports = useCallback((orders: OrderRow[], dateRange: { start: Date | null, end: Date | null }) => {
@@ -186,7 +187,10 @@ export default function Home() {
         if (!uploadResponse.ok) {
           const errorData = await uploadResponse.json();
           console.error('Failed to save to database:', errorData.error);
-          // We can optionally show a warning, but we still want to show reports based on client state
+          setError(`Warning: File processed but failed to save to database: ${errorData.error || 'Unknown error'}`);
+        } else {
+          // Bump the refresh key so Past Records re-fetches on next visit
+          setPastRecordsRefreshKey(prev => prev + 1);
         }
       } catch (uploadObjErr) {
         console.error('Error saving to database:', uploadObjErr);
@@ -371,6 +375,8 @@ export default function Home() {
 
             {activeTab === 'past_records' && (
               <PastRecordsView
+                key={pastRecordsRefreshKey}
+                refreshKey={pastRecordsRefreshKey}
                 onLoadRecord={(loadedOrders) => {
                   setOrders(loadedOrders);
                   setFilteredOrders(loadedOrders);
