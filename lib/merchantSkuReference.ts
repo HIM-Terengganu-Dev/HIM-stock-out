@@ -171,10 +171,22 @@ export function getComboSkuComponents(merchantSku: string): Component[] | undefi
   return skus[merchantSku];
 }
 
-// Helper function to get product category for a merchant SKU
+// Helper function to get product category for a merchant SKU (case-insensitive)
 export function getProductCategory(merchantSku: string): string | undefined {
+  if (!merchantSku) return undefined;
   const categories = getCurrentProductCategories();
-  return categories[merchantSku];
+
+  // Try exact match first (fast path)
+  if (categories[merchantSku] !== undefined) return categories[merchantSku];
+
+  // Fall back to case-insensitive match
+  const normalized = merchantSku.toUpperCase();
+  for (const key in categories) {
+    if (key.toUpperCase() === normalized) {
+      return categories[key];
+    }
+  }
+  return undefined;
 }
 
 // Case-insensitive helper functions for checking SKUs
