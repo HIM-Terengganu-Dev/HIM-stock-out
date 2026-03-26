@@ -624,3 +624,33 @@ export function findMissingMerchantSkus(orders: OrderRow[]): MissingMerchantSku[
   });
 }
 
+
+export function generateManualOrderReport(
+  orders: OrderRow[],
+  dateRange?: { start: Date | null, end: Date | null }
+): StockOutQuantity[] {
+  // Filter for Manual marketplace orders only (case-insensitive)
+  const manualOrders = orders.filter(order =>
+    (order['Marketplace'] || '').toLowerCase() === 'manual'
+  );
+
+  // Apply date range filter on Order Time if provided
+  const dateFiltered = dateRange
+    ? filterByDateRange(manualOrders, dateRange.start, dateRange.end, 'Order Time')
+    : manualOrders;
+
+  // Exclude canceled statuses
+  const excludingCanceled = dateFiltered.filter(order =>
+    !CANCELED_STATUSES.includes(order['Marketplace Status'] || '')
+  );
+
+  const quantities = calculateStockOutQuantities(excludingCanceled);
+
+  const report = Object.entries(quantities).map(([merchant_sku, stock_out_quantity]) => ({
+    merchant_sku,
+    product_category: getProductCategory(merchant_sku),
+    stock_out_quantity,
+  }));
+
+  return sortByProductCategory(report);
+}

@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect } from 'react';
 import { parseExcelFile, exportToExcel, exportReport4, exportBreakdownReport, exportMissingMerchantSkus } from '@/lib/excelUtils';
-import { generateReport1, generateReport2, generateReport3, generateReport4, generateBreakdownReport, findMissingMerchantSkus, getDateRange, filterByDateRange, OrderRow, MissingMerchantSku } from '@/lib/analysis';
+import { generateReport1, generateReport2, generateReport3, generateReport4, generateBreakdownReport, generateManualOrderReport, findMissingMerchantSkus, getDateRange, filterByDateRange, OrderRow, MissingMerchantSku } from '@/lib/analysis';
 import { updateMerchantSkusData } from '@/lib/merchantSkuReference';
 import FileUpload from '@/components/FileUpload';
 import ReportTabs from '@/components/ReportTabs';
@@ -23,6 +23,7 @@ export default function Home() {
   const [report3, setReport3] = useState<Record<string, any[]>>({});
   const [report4, setReport4] = useState<{ summary: any[]; detailed: any[] } | null>(null);
   const [breakdownReport, setBreakdownReport] = useState<any[]>([]);
+  const [manualOrderReport, setManualOrderReport] = useState<any[]>([]);
   const [missingMerchantSkus, setMissingMerchantSkus] = useState<MissingMerchantSku[]>([]);
   const [filteredOrders, setFilteredOrders] = useState<OrderRow[]>([]);
 
@@ -40,6 +41,7 @@ export default function Home() {
     setReport3(generateReport3(orders, dateRange));
     setReport4(generateReport4(orders, dateRange));
     setBreakdownReport(generateBreakdownReport(orders, dateRange));
+    setManualOrderReport(generateManualOrderReport(orders, dateRange));
     setMissingMerchantSkus(findMissingMerchantSkus(orders));
   }, []);
 
@@ -267,6 +269,7 @@ export default function Home() {
     { id: 'report3', label: 'Report 3: By Marketplace' },
     { id: 'report4', label: 'Report 4: Detailed' },
     { id: 'breakdown', label: 'Breakdown' },
+    { id: 'manual_orders', label: 'Manual Orders' },
     { id: 'manage', label: 'Manage SKUs' },
     { id: 'past_records', label: 'Past Records' },
   ];
@@ -407,6 +410,17 @@ export default function Home() {
               />
             )}
 
+            {activeTab === 'manual_orders' && (
+              <ReportContainer
+                title="Manual Orders: Stock-Out Summary"
+                dateRange={formatUserDateRange() || undefined}
+                data={manualOrderReport}
+                onExport={() => {
+                  if (manualOrderReport.length > 0) exportToExcel(manualOrderReport, 'manual_orders_stockout.xlsx');
+                }}
+              />
+            )}
+
             {activeTab === 'manage' && (
               <MerchantSkuManager />
             )}
@@ -428,6 +442,12 @@ export default function Home() {
             {activeTab !== 'manage' && activeTab !== 'past_records' && orders.length === 0 && (
               <div className="text-center py-12 text-gray-500">
                 <p>Please upload an Excel file or select a past record to view reports</p>
+              </div>
+            )}
+
+            {activeTab === 'manual_orders' && orders.length > 0 && manualOrderReport.length === 0 && (
+              <div className="text-center py-12 text-gray-500">
+                <p>No Manual Order stock-outs found in the uploaded data.</p>
               </div>
             )}
           </div>
