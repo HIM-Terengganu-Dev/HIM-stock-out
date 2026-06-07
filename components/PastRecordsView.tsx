@@ -113,9 +113,9 @@ export default function PastRecordsView({ onLoadRecord, refreshKey }: PastRecord
 
     if (loading) {
         return (
-            <div className="flex justify-center items-center py-12">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                <span className="ml-3 text-gray-600">Loading past records...</span>
+            <div className="flex justify-center items-center py-16" role="status" aria-live="polite">
+                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600" aria-hidden="true"></div>
+                <span className="ml-4 text-base font-semibold text-gray-700">Loading upload history...</span>
             </div>
         );
     }
@@ -123,10 +123,11 @@ export default function PastRecordsView({ onLoadRecord, refreshKey }: PastRecord
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center">
-                <h2 className="text-2xl font-bold text-gray-900">Past Records</h2>
+                <h2 className="text-2xl font-bold text-gray-900">Upload History</h2>
                 <button
                     onClick={fetchHistory}
-                    className="text-sm text-blue-600 hover:text-blue-800"
+                    className="text-base font-bold text-blue-600 hover:text-blue-800 underline underline-offset-4"
+                    aria-label="Refresh upload history list"
                 >
                     Refresh List
                 </button>
@@ -139,24 +140,24 @@ export default function PastRecordsView({ onLoadRecord, refreshKey }: PastRecord
             )}
 
             {records.length === 0 ? (
-                <div className="text-center py-12 bg-white rounded-lg border shadow-sm text-gray-500">
+                <div className="text-center py-16 bg-white rounded-xl border-2 border-dashed border-gray-200 text-base font-medium text-gray-500">
                     No past records found. Upload an Excel file to see it here!
                 </div>
             ) : (
-                <div className="overflow-x-auto bg-white rounded-lg border shadow-sm">
-                    <table className="min-w-full divide-y divide-gray-200">
+                <div className="overflow-x-auto bg-white rounded-xl border border-gray-200 shadow-md">
+                    <table className="min-w-full divide-y divide-gray-200" aria-label="Order Upload History">
                         <thead className="bg-gray-50">
                             <tr>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <th scope="col" className="px-6 py-4 text-left text-base font-bold text-gray-700 uppercase tracking-wider">
                                     Upload Time
                                 </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <th scope="col" className="px-6 py-4 text-left text-base font-bold text-gray-700 uppercase tracking-wider">
                                     Date Range
                                 </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <th scope="col" className="px-6 py-4 text-left text-base font-bold text-gray-700 uppercase tracking-wider">
                                     Total Rows
                                 </th>
-                                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <th scope="col" className="px-6 py-4 text-right text-base font-bold text-gray-700 uppercase tracking-wider">
                                     Actions
                                 </th>
                             </tr>
@@ -164,46 +165,49 @@ export default function PastRecordsView({ onLoadRecord, refreshKey }: PastRecord
                         <tbody className="bg-white divide-y divide-gray-200">
                             {records.map((record) => (
                                 <tr key={record.batch_id} className="hover:bg-gray-50">
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                    <td className="px-6 py-5 whitespace-nowrap text-base font-semibold text-gray-900">
                                         {new Date(record.upload_timestamp).toLocaleString()}
                                     </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    <td className="px-6 py-5 whitespace-nowrap text-base text-gray-600">
                                         {formatDateRange(record.min_date, record.max_date)}
                                     </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    <td className="px-6 py-5 whitespace-nowrap text-base text-gray-600 font-medium">
                                         {record.total_rows} orders
                                     </td>
-                                    <td className="px-6 py-4 text-right text-sm space-x-2">
+                                    <td className="px-6 py-5 text-right text-base space-x-3">
                                         {confirmingDelete === record.batch_id ? (
-                                            <>
-                                                <span className="text-sm text-gray-600 mr-2">Sure?</span>
+                                            <div className="flex items-center justify-end gap-3" role="alert">
+                                                <span className="text-base font-bold text-red-600">Confirm delete?</span>
                                                 <button
                                                     onClick={() => handleDeleteRecord(record.batch_id)}
                                                     disabled={deletingBatch === record.batch_id}
-                                                    className="inline-flex items-center px-3 py-1.5 rounded-md text-sm font-medium text-white bg-red-600 hover:bg-red-700 disabled:opacity-50"
+                                                    className="inline-flex items-center px-4 py-2 rounded-lg text-base font-bold text-white bg-red-600 hover:bg-red-700 transition-all shadow-sm"
+                                                    aria-label={`Confirm permanent deletion of batch from ${new Date(record.upload_timestamp).toLocaleString()}`}
                                                 >
                                                     {deletingBatch === record.batch_id ? 'Deleting...' : 'Yes, Delete'}
                                                 </button>
                                                 <button
                                                     onClick={() => setConfirmingDelete(null)}
-                                                    className="inline-flex items-center px-3 py-1.5 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+                                                    className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg text-base font-bold text-gray-700 bg-white hover:bg-gray-50 transition-all"
                                                 >
                                                     Cancel
                                                 </button>
-                                            </>
+                                            </div>
                                         ) : (
                                             <>
                                                 <button
                                                     onClick={() => handleLoadRecord(record.batch_id)}
                                                     disabled={loadingBatch === record.batch_id || deletingBatch === record.batch_id}
-                                                    className="inline-flex items-center px-3 py-1.5 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50"
+                                                    className="inline-flex items-center px-5 py-2.5 border border-transparent rounded-lg shadow-sm text-base font-bold text-white bg-blue-600 hover:bg-blue-700 transition-all disabled:opacity-50"
+                                                    aria-label={`View reports for batch from ${new Date(record.upload_timestamp).toLocaleString()}`}
                                                 >
                                                     {loadingBatch === record.batch_id ? 'Loading...' : 'View Reports'}
                                                 </button>
                                                 <button
                                                     onClick={() => setConfirmingDelete(record.batch_id)}
                                                     disabled={loadingBatch === record.batch_id}
-                                                    className="inline-flex items-center px-3 py-1.5 border border-red-200 rounded-md shadow-sm text-sm font-medium text-red-600 bg-red-50 hover:bg-red-100 disabled:opacity-50"
+                                                    className="inline-flex items-center px-5 py-2.5 border border-red-200 rounded-lg shadow-sm text-base font-bold text-red-600 bg-red-50 hover:bg-red-100 transition-all disabled:opacity-50"
+                                                    aria-label={`Delete batch from ${new Date(record.upload_timestamp).toLocaleString()}`}
                                                 >
                                                     Delete
                                                 </button>

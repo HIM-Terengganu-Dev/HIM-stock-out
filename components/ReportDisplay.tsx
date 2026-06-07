@@ -24,28 +24,29 @@ export default function ReportDisplay({ title, dateRange, data, onExport, hideEx
       {title && (
         <div className="flex justify-between items-center mb-4">
           <div>
-            <h2 className="text-xl font-semibold">{title}</h2>
+            <h2 className="text-2xl font-bold text-gray-900">{title}</h2>
             {dateRange && (
-              <p className="text-sm text-gray-500 mt-1">Date Range: {dateRange}</p>
+              <p className="text-base text-gray-500 mt-2 font-medium">Date Range: {dateRange}</p>
             )}
           </div>
           <div className="flex items-center gap-2">
             <button
               onClick={() => setShowMerchantSku(!showMerchantSku)}
-              className={`px-3 py-2 rounded transition-colors ${
+              className={`px-4 py-2.5 rounded-xl transition-all duration-200 border ${
                 showMerchantSku 
-                  ? 'text-blue-600 hover:bg-blue-50' 
-                  : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
+                  ? 'bg-blue-50 border-blue-200 text-blue-600 shadow-sm' 
+                  : 'bg-white border-gray-200 text-gray-400 hover:text-gray-600 hover:bg-gray-50'
               }`}
+              aria-label={showMerchantSku ? "Hide Merchant SKU column" : "Show Merchant SKU column"}
               title={showMerchantSku ? "Hide Merchant SKU" : "Show Merchant SKU"}
             >
               {showMerchantSku ? (
-                // Eye open icon
                 <svg
-                  className="w-5 h-5"
+                  className="w-6 h-6"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
+                  aria-hidden="true"
                 >
                   <path
                     strokeLinecap="round"
@@ -61,12 +62,12 @@ export default function ReportDisplay({ title, dateRange, data, onExport, hideEx
                   />
                 </svg>
               ) : (
-                // Eye closed icon
                 <svg
-                  className="w-5 h-5"
+                  className="w-6 h-6"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
+                  aria-hidden="true"
                 >
                   <path
                     strokeLinecap="round"
@@ -80,7 +81,8 @@ export default function ReportDisplay({ title, dateRange, data, onExport, hideEx
             {!hideExportButton && (
               <button
                 onClick={onExport}
-                className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+                aria-label={`Export ${title} data to Excel`}
+                className="px-6 py-2.5 bg-green-600 text-white rounded-xl hover:bg-green-700 font-bold shadow-sm transition-all duration-200"
               >
                 Export to Excel
               </button>
@@ -89,50 +91,50 @@ export default function ReportDisplay({ title, dateRange, data, onExport, hideEx
         </div>
       )}
       
-      <div className="mb-4 text-sm text-gray-600">
-        <p>Total Stock-Out Quantity: <span className="font-semibold">{totalQuantity}</span></p>
-        <p>Unique Merchant SKUs: <span className="font-semibold">{data.length}</span></p>
+      <div className="mb-6 text-base text-gray-700 bg-gray-50 p-4 rounded-xl border border-gray-100 flex gap-8">
+        <p>Total Quantity: <span className="font-bold text-gray-900">{totalQuantity}</span></p>
+        <p>Unique SKUs: <span className="font-bold text-gray-900">{data.length}</span></p>
       </div>
 
       <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200">
+        <table className="min-w-full divide-y divide-gray-200" aria-label={`${title} Data Table`}>
           <thead className="bg-gray-50">
             <tr>
               {data[0]?.marketplace && (
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-4 text-left text-base font-bold text-gray-700 uppercase tracking-wide">
                   Marketplace
                 </th>
               )}
               {showMerchantSku && (
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-4 text-left text-base font-bold text-gray-700 uppercase tracking-wide">
                   Merchant SKU
                 </th>
               )}
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-4 py-4 text-left text-base font-bold text-gray-700 uppercase tracking-wide">
                 Product Category
               </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Stock-Out Quantity
+              <th className="px-4 py-4 text-left text-base font-bold text-gray-700 uppercase tracking-wide">
+                Quantity
               </th>
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
+          <tbody className="bg-white divide-y divide-gray-100">
             {data.map((item, idx) => (
-              <tr key={idx} className="hover:bg-gray-50">
+              <tr key={idx} className="hover:bg-blue-50/50 transition-colors">
                 {data[0]?.marketplace && (
-                  <td className="px-4 py-3 text-sm font-medium text-gray-900">
+                  <td className="px-4 py-4 text-base font-medium text-gray-900 border-b border-gray-50">
                     {item.marketplace || '-'}
                   </td>
                 )}
                 {showMerchantSku && (
-                  <td className="px-4 py-3 text-sm font-medium text-gray-900">
+                  <td className="px-4 py-4 text-base font-mono font-bold text-blue-700 border-b border-gray-50">
                     {item.merchant_sku}
                   </td>
                 )}
-                <td className="px-4 py-3 text-sm text-gray-600">
+                <td className="px-4 py-4 text-base text-gray-700 border-b border-gray-50">
                   {item.product_category || '-'}
                 </td>
-                <td className="px-4 py-3 text-sm font-semibold text-gray-900">
+                <td className="px-4 py-4 text-base font-bold text-gray-900 border-b border-gray-50">
                   {item.stock_out_quantity.toLocaleString()}
                 </td>
               </tr>

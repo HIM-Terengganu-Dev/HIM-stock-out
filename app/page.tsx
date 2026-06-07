@@ -61,6 +61,8 @@ export default function Home() {
     loadMerchantSkus();
   }, []);
 
+
+
   // Regenerate reports when date range changes
   useEffect(() => {
     if (orders.length > 0) {
@@ -277,8 +279,13 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4">
       <div className="max-w-7xl mx-auto">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Stock-Out Tracker</h1>
-        <p className="text-gray-600 mb-8">Upload your orders Excel file to generate visual stock-out reports</p>
+        <div className="flex items-start justify-between mb-6">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Stock-Out Tracker</h1>
+            <p className="text-gray-600 mt-1">Upload your orders Excel file to generate visual stock-out reports</p>
+          </div>
+          <div></div>
+        </div>
 
         <div className="flex gap-6 mb-8">
           {/* Left side - Notification area (25%) */}
@@ -304,13 +311,16 @@ export default function Home() {
         {/* DB Save Toast Notification */}
         {dbSaveStatus && (
           <div
-            className={`fixed bottom-6 right-6 z-50 flex items-center gap-3 px-5 py-4 rounded-xl shadow-xl text-white text-sm font-medium transition-all ${dbSaveStatus.ok ? 'bg-green-500' : 'bg-red-500'
+            role="status"
+            aria-live="polite"
+            className={`fixed bottom-6 right-6 z-50 flex items-center gap-3 px-5 py-4 rounded-xl shadow-xl text-white text-base font-medium transition-all ${dbSaveStatus.ok ? 'bg-green-500' : 'bg-red-500'
               }`}
           >
             <span>{dbSaveStatus.message}</span>
             <button
               onClick={() => setDbSaveStatus(null)}
               className="ml-2 text-white/80 hover:text-white font-bold"
+              aria-label="Dismiss notification"
             >
               ✕
             </button>

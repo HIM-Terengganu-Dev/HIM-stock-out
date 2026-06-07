@@ -56,11 +56,12 @@ export default function DateRangePicker({ onDateRangeChange }: DateRangePickerPr
   return (
     <div className="bg-white border border-gray-200 rounded-lg p-4 mb-6">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-gray-900">Filter by Date/Time Range</h3>
+        <h3 className="text-xl font-bold text-gray-900">Filter by Date/Time Range</h3>
         {hasFilter && (
           <button
             onClick={handleClear}
-            className="text-sm text-gray-600 hover:text-gray-800 underline"
+            className="text-base font-medium text-blue-600 hover:text-blue-800 underline underline-offset-4"
+            aria-label="Clear all date and time filters"
           >
             Clear Filter
           </button>
@@ -69,7 +70,7 @@ export default function DateRangePicker({ onDateRangeChange }: DateRangePickerPr
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label htmlFor="start-date" className="block text-base font-semibold text-gray-700 mb-2">
             Start Date & Time
           </label>
           <div className="flex gap-2">
@@ -78,20 +79,23 @@ export default function DateRangePicker({ onDateRangeChange }: DateRangePickerPr
                 value={startDate}
                 onChange={setStartDate}
                 placeholder="Start date"
+                id="start-date"
               />
             </div>
             <input
+              id="start-time"
               type="time"
               step="1"
+              aria-label="Start time"
               value={startTime || '00:00:00'}
               onChange={(e) => setStartTime(e.target.value)}
-              className="w-36 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-40 px-3 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base"
             />
           </div>
         </div>
         
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label htmlFor="end-date" className="block text-base font-semibold text-gray-700 mb-2">
             End Date & Time
           </label>
           <div className="flex gap-2">
@@ -100,24 +104,27 @@ export default function DateRangePicker({ onDateRangeChange }: DateRangePickerPr
                 value={endDate}
                 onChange={setEndDate}
                 placeholder="End date"
+                id="end-date"
               />
             </div>
             <input
+              id="end-time"
               type="time"
               step="1"
+              aria-label="End time"
               value={endTime || '23:59:59'}
               onChange={(e) => setEndTime(e.target.value)}
-              className="w-36 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-40 px-3 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base"
             />
           </div>
         </div>
       </div>
       
       {!hasFilter && (
-        <p className="text-sm text-gray-500 mt-2">No filter applied - showing all data</p>
+        <p className="text-base text-gray-500 mt-3 font-medium" role="status">No filter applied - showing all data</p>
       )}
       {hasFilter && (
-        <p className="text-sm text-gray-600 mt-2">
+        <p className="text-base text-gray-700 mt-3 font-medium bg-blue-50/50 p-3 rounded-lg border border-blue-100" aria-live="polite">
           {startDate && endDate 
             ? `Filtering from ${startDate} ${startTime || '00:00:00'} to ${endDate} ${endTime || '23:59:59'}`
             : startDate 

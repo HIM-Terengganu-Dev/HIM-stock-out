@@ -7,9 +7,10 @@ interface CustomDateInputProps {
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
+  id?: string;
 }
 
-export default function CustomDateInput({ value, onChange, placeholder = 'Select date' }: CustomDateInputProps) {
+export default function CustomDateInput({ value, onChange, placeholder = 'Select date', id }: CustomDateInputProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | null>(value ? new Date(value) : null);
   const wrapperRef = useRef<HTMLDivElement>(null);
@@ -99,6 +100,7 @@ export default function CustomDateInput({ value, onChange, placeholder = 'Select
     <div ref={wrapperRef} className="relative w-full">
       <div className="relative">
         <input
+          id={id}
           ref={inputRef}
           type="text"
           readOnly

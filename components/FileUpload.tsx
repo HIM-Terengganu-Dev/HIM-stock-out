@@ -56,11 +56,13 @@ export default function FileUpload({ onFileUpload, loading }: FileUploadProps) {
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
+      role="region"
+      aria-label="Excel File Upload Dropzone"
       className={`
-        border-2 border-dashed rounded-lg p-12 text-center transition-colors
+        border-2 border-dashed rounded-xl p-12 text-center transition-all duration-200
         ${isDragging 
           ? 'border-blue-500 bg-blue-50' 
-          : 'border-gray-300 bg-white hover:border-gray-400'
+          : 'border-gray-300 bg-white hover:border-gray-400 focus-within:border-blue-500'
         }
         ${loading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
       `}
@@ -87,6 +89,7 @@ export default function FileUpload({ onFileUpload, loading }: FileUploadProps) {
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
+              aria-hidden="true"
             >
               <path
                 strokeLinecap="round"
@@ -95,18 +98,19 @@ export default function FileUpload({ onFileUpload, loading }: FileUploadProps) {
                 d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
               />
             </svg>
-            <p className="text-lg font-medium text-gray-700 mb-2">
+            <p className="text-xl font-semibold text-gray-800 mb-2">
               Drag and drop your Excel file here
             </p>
-            <p className="text-sm text-gray-500 mb-4">or</p>
+            <p className="text-base text-gray-500 mb-4 font-medium uppercase tracking-wider">or</p>
             <button
               type="button"
               onClick={handleBrowseClick}
-              className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              className="px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all font-semibold shadow-sm mb-4"
+              aria-label="Browse local files for upload"
             >
               Browse Files
             </button>
-            <p className="text-xs text-gray-400 mt-4">
+            <p className="text-base text-gray-500 font-medium">
               Supports .xlsx and .xls files
             </p>
           </div>

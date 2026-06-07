@@ -261,7 +261,7 @@ export default function MerchantSkuManager() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold text-gray-900">Merchant SKU Management</h2>
-        <p className="text-sm text-gray-500">All data is saved directly to the database. No file sync needed.</p>
+        <p className="text-base text-gray-500">All data is saved directly to the database. No file sync needed.</p>
       </div>
 
       {error && (
@@ -277,10 +277,13 @@ export default function MerchantSkuManager() {
       )}
 
       <div className="border-b border-gray-200">
-        <nav className="-mb-px flex space-x-8">
+        <nav className="-mb-px flex space-x-8" role="tablist" aria-label="SKU Type Navigation">
           <button
             onClick={() => setActiveType('single')}
-            className={`py-4 px-1 border-b-2 font-medium text-sm ${activeType === 'single'
+            role="tab"
+            aria-selected={activeType === 'single'}
+            aria-controls="single-sku-panel"
+            className={`py-4 px-1 border-b-2 font-medium text-base ${activeType === 'single'
                 ? 'border-blue-500 text-blue-600'
                 : 'border-transparent text-gray-500 hover:text-gray-700'
               }`}
@@ -289,7 +292,10 @@ export default function MerchantSkuManager() {
           </button>
           <button
             onClick={() => setActiveType('combo')}
-            className={`py-4 px-1 border-b-2 font-medium text-sm ${activeType === 'combo'
+            role="tab"
+            aria-selected={activeType === 'combo'}
+            aria-controls="combo-sku-panel"
+            className={`py-4 px-1 border-b-2 font-medium text-base ${activeType === 'combo'
                 ? 'border-blue-500 text-blue-600'
                 : 'border-transparent text-gray-500 hover:text-gray-700'
               }`}
@@ -320,24 +326,26 @@ export default function MerchantSkuManager() {
               <h4 className="font-semibold mb-3">{editingSingle ? 'Edit' : 'Add'} Single SKU</h4>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Merchant SKU *</label>
+                  <label htmlFor="merchant_sku" className="block text-base font-medium text-gray-700 mb-1">Merchant SKU *</label>
                   <input
+                    id="merchant_sku"
                     type="text"
                     value={singleForm.merchant_sku}
                     onChange={(e) => setSingleForm({ ...singleForm, merchant_sku: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded"
+                    className="w-full px-3 py-2 border border-gray-300 rounded text-base"
                     disabled={!!editingSingle}
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Product Category *</label>
+                  <label htmlFor="product_category" className="block text-base font-medium text-gray-700 mb-1">Product Category *</label>
                   <input
+                    id="product_category"
                     type="text"
                     list="productCategoriesList"
                     placeholder="Select or Type Product Category"
                     value={singleForm.product_category}
                     onChange={(e) => setSingleForm({ ...singleForm, product_category: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded"
+                    className="w-full px-3 py-2 border border-gray-300 rounded text-base"
                   />
                   <datalist id="productCategoriesList">
                     {productCategories.map((cat) => (
@@ -346,14 +354,15 @@ export default function MerchantSkuManager() {
                   </datalist>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Sale Class</label>
+                  <label htmlFor="sale_class" className="block text-base font-medium text-gray-700 mb-1">Sale Class</label>
                   <input
+                    id="sale_class"
                     type="text"
                     list="saleClassesList"
                     placeholder="Select or Type Sale Class (Optional)"
                     value={singleForm.sale_class}
                     onChange={(e) => setSingleForm({ ...singleForm, sale_class: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded"
+                    className="w-full px-3 py-2 border border-gray-300 rounded text-base"
                   />
                   <datalist id="saleClassesList">
                     {saleClasses.map((saleClass) => (
@@ -387,10 +396,10 @@ export default function MerchantSkuManager() {
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Merchant SKU</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Product Category</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Sale Class</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                  <th className="px-4 py-3 text-left text-base font-semibold text-gray-700 uppercase tracking-wider">Merchant SKU</th>
+                  <th className="px-4 py-3 text-left text-base font-semibold text-gray-700 uppercase tracking-wider">Product Category</th>
+                  <th className="px-4 py-3 text-left text-base font-semibold text-gray-700 uppercase tracking-wider">Sale Class</th>
+                  <th className="px-4 py-3 text-left text-base font-semibold text-gray-700 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
@@ -405,19 +414,21 @@ export default function MerchantSkuManager() {
                 ) : (
                   singleSkus.map((sku, idx) => (
                     <tr key={idx} className="hover:bg-gray-50">
-                      <td className="px-4 py-3 text-sm font-medium text-gray-900">{sku.merchant_sku}</td>
-                      <td className="px-4 py-3 text-sm text-gray-600">{sku.product_category || '-'}</td>
-                      <td className="px-4 py-3 text-sm text-gray-600">{sku.sale_class || '-'}</td>
-                      <td className="px-4 py-3 text-sm">
+                      <td className="px-4 py-4 text-base font-medium text-gray-900">{sku.merchant_sku}</td>
+                      <td className="px-4 py-4 text-base text-gray-600">{sku.product_category || '-'}</td>
+                      <td className="px-4 py-4 text-base text-gray-600">{sku.sale_class || '-'}</td>
+                      <td className="px-4 py-4 text-base">
                         <button
                           onClick={() => handleEditSingle(sku)}
-                          className="text-blue-600 hover:text-blue-800 mr-3"
+                          className="text-blue-600 hover:text-blue-800 mr-4 font-medium"
+                          aria-label={`Edit ${sku.merchant_sku}`}
                         >
                           Edit
                         </button>
                         <button
                           onClick={() => handleDeleteSingle(sku.merchant_sku)}
-                          className="text-red-600 hover:text-red-800"
+                          className="text-red-600 hover:text-red-800 font-medium"
+                          aria-label={`Delete ${sku.merchant_sku}`}
                         >
                           Delete
                         </button>
@@ -452,32 +463,35 @@ export default function MerchantSkuManager() {
               <h4 className="font-semibold mb-3">{editingCombo ? 'Edit' : 'Add'} Combo SKU</h4>
               <div className="mb-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Merchant SKU *</label>
+                  <label htmlFor="combo_merchant_sku" className="block text-base font-medium text-gray-700 mb-1">Merchant SKU *</label>
                   <input
+                    id="combo_merchant_sku"
                     type="text"
                     value={comboForm.merchant_sku}
                     onChange={(e) => setComboForm({ ...comboForm, merchant_sku: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded"
+                    className="w-full px-3 py-2 border border-gray-300 rounded text-base"
                     disabled={!!editingCombo}
                   />
                 </div>
               </div>
 
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-2">Components *</label>
+                <label htmlFor="component_qty" className="block text-base font-medium text-gray-700 mb-2">Components *</label>
                 <div className="grid grid-cols-4 gap-2 mb-2">
                   <input
+                    id="component_qty"
                     type="number"
                     placeholder="Qty"
                     value={newComponent.qty}
                     onChange={(e) => setNewComponent({ ...newComponent, qty: parseInt(e.target.value) || 1 })}
-                    className="px-3 py-2 border border-gray-300 rounded"
+                    className="px-3 py-2 border border-gray-300 rounded text-base"
                     min="1"
                   />
                   <select
+                    aria-label="Select component SKU"
                     value={newComponent.component_merchant_sku}
                     onChange={(e) => setNewComponent({ ...newComponent, component_merchant_sku: e.target.value })}
-                    className="px-3 py-2 border border-gray-300 rounded col-span-2"
+                    className="px-3 py-2 border border-gray-300 rounded col-span-2 text-base"
                   >
                     <option value="">Select Component SKU</option>
                     {singleSkuOptions.map((sku) => (
@@ -488,7 +502,8 @@ export default function MerchantSkuManager() {
                   </select>
                   <button
                     onClick={addComponent}
-                    className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                    className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 font-medium"
+                    aria-label="Add component to combo"
                   >
                     Add
                   </button>
@@ -496,11 +511,12 @@ export default function MerchantSkuManager() {
                 <div className="space-y-2">
                   {comboForm.components.map((comp, idx) => (
                     <div key={idx} className="flex items-center gap-2 p-2 bg-white rounded border">
-                      <span className="text-sm font-medium">{comp.qty}x</span>
-                      <span className="text-sm flex-1">{comp.component_merchant_sku}</span>
+                      <span className="text-base font-medium">{comp.qty}x</span>
+                      <span className="text-base flex-1">{comp.component_merchant_sku}</span>
                       <button
                         onClick={() => removeComponent(idx)}
-                        className="text-red-600 hover:text-red-800 text-sm"
+                        className="text-red-600 hover:text-red-800 text-base font-medium"
+                        aria-label={`Remove component ${comp.component_merchant_sku}`}
                       >
                         Remove
                       </button>
@@ -534,9 +550,9 @@ export default function MerchantSkuManager() {
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Merchant SKU</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Components</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                  <th className="px-4 py-3 text-left text-base font-semibold text-gray-700 uppercase tracking-wider">Merchant SKU</th>
+                  <th className="px-4 py-3 text-left text-base font-semibold text-gray-700 uppercase tracking-wider">Components</th>
+                  <th className="px-4 py-3 text-left text-base font-semibold text-gray-700 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
@@ -553,12 +569,12 @@ export default function MerchantSkuManager() {
                     const components = typeof sku.components === 'string' ? JSON.parse(sku.components) : sku.components;
                     return (
                       <tr key={idx} className="hover:bg-gray-50">
-                        <td className="px-4 py-3 text-sm font-medium text-gray-900">{sku.merchant_sku}</td>
-                        <td className="px-4 py-3 text-sm text-gray-600">
+                        <td className="px-4 py-4 text-base font-medium text-gray-900">{sku.merchant_sku}</td>
+                        <td className="px-4 py-4 text-base text-gray-600">
                           {Array.isArray(components) ? (
-                            <div className="flex flex-wrap gap-1">
+                            <div className="flex flex-wrap gap-2">
                               {components.map((comp: Component, i: number) => (
-                                <span key={i} className="px-2 py-1 bg-gray-100 rounded text-xs">
+                                <span key={i} className="px-3 py-1 bg-gray-100 rounded-lg text-base font-medium">
                                   {comp.qty}x {comp.component_merchant_sku}
                                 </span>
                               ))}
@@ -567,16 +583,18 @@ export default function MerchantSkuManager() {
                             '-'
                           )}
                         </td>
-                        <td className="px-4 py-3 text-sm">
+                        <td className="px-4 py-4 text-base">
                           <button
                             onClick={() => handleEditCombo(sku)}
-                            className="text-blue-600 hover:text-blue-800 mr-3"
+                            className="text-blue-600 hover:text-blue-800 mr-4 font-medium"
+                            aria-label={`Edit combo SKU ${sku.merchant_sku}`}
                           >
                             Edit
                           </button>
                           <button
                             onClick={() => handleDeleteCombo(sku.merchant_sku)}
-                            className="text-red-600 hover:text-red-800"
+                            className="text-red-600 hover:text-red-800 font-medium"
+                            aria-label={`Delete combo SKU ${sku.merchant_sku}`}
                           >
                             Delete
                           </button>
