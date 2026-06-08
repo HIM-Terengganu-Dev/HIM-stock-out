@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import CustomDateInput from './CustomDateInput';
+import { Calendar, Clock, X } from 'lucide-react';
 
 interface DateRangePickerProps {
   onDateRangeChange: (start: Date | null, end: Date | null) => void;
@@ -54,23 +55,28 @@ export default function DateRangePicker({ onDateRangeChange }: DateRangePickerPr
   const hasFilter = startDate || endDate;
 
   return (
-    <div className="bg-white border border-gray-200 rounded-lg p-4 mb-6">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-xl font-bold text-gray-900">Filter by Date/Time Range</h3>
+    <div className="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-sm shadow-slate-100/40 mb-6">
+      <div className="flex items-center justify-between pb-3.5 mb-4 border-b border-slate-100">
+        <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
+          <Calendar className="w-4 h-4 text-indigo-600" />
+          Filter by Date/Time Range
+        </h3>
         {hasFilter && (
           <button
             onClick={handleClear}
-            className="text-base font-medium text-blue-600 hover:text-blue-800 underline underline-offset-4"
+            className="flex items-center gap-1 text-xs font-bold text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100/60 px-3 py-1.5 rounded-lg transition-all"
             aria-label="Clear all date and time filters"
           >
+            <X className="w-3.5 h-3.5" />
             Clear Filter
           </button>
         )}
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         <div>
-          <label htmlFor="start-date" className="block text-base font-semibold text-gray-700 mb-2">
+          <label htmlFor="start-date" className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2 flex items-center gap-1">
+            <Clock className="w-3.5 h-3.5 text-slate-400" />
             Start Date & Time
           </label>
           <div className="flex gap-2">
@@ -78,7 +84,7 @@ export default function DateRangePicker({ onDateRangeChange }: DateRangePickerPr
               <CustomDateInput
                 value={startDate}
                 onChange={setStartDate}
-                placeholder="Start date"
+                placeholder="Select start date"
                 id="start-date"
               />
             </div>
@@ -89,13 +95,14 @@ export default function DateRangePicker({ onDateRangeChange }: DateRangePickerPr
               aria-label="Start time"
               value={startTime || '00:00:00'}
               onChange={(e) => setStartTime(e.target.value)}
-              className="w-40 px-3 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base"
+              className="w-36 px-4 py-2.5 border border-slate-300 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 rounded-xl text-base outline-none bg-white transition-all shadow-sm"
             />
           </div>
         </div>
         
         <div>
-          <label htmlFor="end-date" className="block text-base font-semibold text-gray-700 mb-2">
+          <label htmlFor="end-date" className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2 flex items-center gap-1">
+            <Clock className="w-3.5 h-3.5 text-slate-400" />
             End Date & Time
           </label>
           <div className="flex gap-2">
@@ -103,7 +110,7 @@ export default function DateRangePicker({ onDateRangeChange }: DateRangePickerPr
               <CustomDateInput
                 value={endDate}
                 onChange={setEndDate}
-                placeholder="End date"
+                placeholder="Select end date"
                 id="end-date"
               />
             </div>
@@ -114,17 +121,17 @@ export default function DateRangePicker({ onDateRangeChange }: DateRangePickerPr
               aria-label="End time"
               value={endTime || '23:59:59'}
               onChange={(e) => setEndTime(e.target.value)}
-              className="w-40 px-3 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base"
+              className="w-36 px-4 py-2.5 border border-slate-300 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 rounded-xl text-base outline-none bg-white transition-all shadow-sm"
             />
           </div>
         </div>
       </div>
       
       {!hasFilter && (
-        <p className="text-base text-gray-500 mt-3 font-medium" role="status">No filter applied - showing all data</p>
+        <p className="text-xs text-slate-500 mt-4 font-semibold" role="status">Showing all dates detected in active session.</p>
       )}
       {hasFilter && (
-        <p className="text-base text-gray-700 mt-3 font-medium bg-blue-50/50 p-3 rounded-lg border border-blue-100" aria-live="polite">
+        <p className="text-xs font-bold text-indigo-700 mt-4 bg-indigo-50/50 p-3 rounded-xl border border-indigo-100/50" aria-live="polite">
           {startDate && endDate 
             ? `Filtering from ${startDate} ${startTime || '00:00:00'} to ${endDate} ${endTime || '23:59:59'}`
             : startDate 
@@ -137,4 +144,3 @@ export default function DateRangePicker({ onDateRangeChange }: DateRangePickerPr
     </div>
   );
 }
-

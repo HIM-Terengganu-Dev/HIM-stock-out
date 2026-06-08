@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import type { OrderRow } from '@/lib/analysis';
+import { RefreshCw, Calendar, FileSpreadsheet, Trash2, BookOpen, AlertTriangle } from 'lucide-react';
 
 interface PastRecord {
     batch_id: string;
@@ -12,7 +13,7 @@ interface PastRecord {
 }
 
 interface PastRecordsViewProps {
-    onLoadRecord: (orders: OrderRow[]) => void;
+    onLoadRecord: (orders: OrderRow[], uploadTime?: string) => void;
     refreshKey?: number;
 }
 
@@ -57,7 +58,9 @@ export default function PastRecordsView({ onLoadRecord, refreshKey }: PastRecord
             const data = await res.json();
 
             if (data.orders && Array.isArray(data.orders)) {
-                onLoadRecord(data.orders);
+                const record = records.find(r => r.batch_id === batchId);
+                const uploadTime = record ? record.upload_timestamp : new Date().toISOString();
+                onLoadRecord(data.orders, uploadTime);
             } else {
                 throw new Error('Invalid format received from server');
             }
@@ -85,7 +88,6 @@ export default function PastRecordsView({ onLoadRecord, refreshKey }: PastRecord
                 throw new Error(data.error || 'Failed to delete record');
             }
 
-            // Immediately remove from the local state so UI updates instantly
             setRecords(prev => prev.filter(r => r.batch_id !== batchId));
 
         } catch (err) {
@@ -96,7 +98,7 @@ export default function PastRecordsView({ onLoadRecord, refreshKey }: PastRecord
     };
 
     const formatDateRange = (minDate: string | null, maxDate: string | null) => {
-        if (!minDate && !maxDate) return 'Unknown';
+        if (!minDate && !maxDate) return 'No dates';
 
         const formatDate = (dateStr: string) => {
             return new Intl.DateTimeFormat('en-GB', {
@@ -113,111 +115,128 @@ export default function PastRecordsView({ onLoadRecord, refreshKey }: PastRecord
 
     if (loading) {
         return (
-            <div className="flex justify-center items-center py-16" role="status" aria-live="polite">
-                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600" aria-hidden="true"></div>
-                <span className="ml-4 text-base font-semibold text-gray-700">Loading upload history...</span>
+            <div className="flex flex-col justify-center items-center py-20" role="status" aria-live="polite">
+                <RefreshCw className="animate-spin h-8 w-8 text-indigo-600 mb-3" />
+                <span className="text-base font-bold text-slate-700">Loading upload history...</span>
             </div>
         );
     }
 
     return (
         <div className="space-y-6">
-            <div className="flex justify-between items-center">
-                <h2 className="text-2xl font-bold text-gray-900">Upload History</h2>
+            <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+                <div>
+                    <h2 className="text-xl font-extrabold text-slate-900">Upload History Log</h2>
+                    <p className="text-sm font-semibold text-slate-500 mt-0.5">Access previous file imports and report configurations</p>
+                </div>
                 <button
                     onClick={fetchHistory}
-                    className="text-base font-bold text-blue-600 hover:text-blue-800 underline underline-offset-4"
+                    className="flex items-center gap-1.5 text-sm font-bold text-indigo-600 hover:text-indigo-800 transition-all"
                     aria-label="Refresh upload history list"
                 >
-                    Refresh List
+                    <RefreshCw className="w-4 h-4" />
+                    Refresh
                 </button>
             </div>
 
             {error && (
-                <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
+                <div className="p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm font-semibold">
                     {error}
                 </div>
             )}
 
             {records.length === 0 ? (
-                <div className="text-center py-16 bg-white rounded-xl border-2 border-dashed border-gray-200 text-base font-medium text-gray-500">
+                <div className="text-center py-16 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200 text-sm font-bold text-slate-400">
                     No past records found. Upload an Excel file to see it here!
                 </div>
             ) : (
-                <div className="overflow-x-auto bg-white rounded-xl border border-gray-200 shadow-md">
-                    <table className="min-w-full divide-y divide-gray-200" aria-label="Order Upload History">
-                        <thead className="bg-gray-50">
-                            <tr>
-                                <th scope="col" className="px-6 py-4 text-left text-base font-bold text-gray-700 uppercase tracking-wider">
-                                    Upload Time
-                                </th>
-                                <th scope="col" className="px-6 py-4 text-left text-base font-bold text-gray-700 uppercase tracking-wider">
-                                    Date Range
-                                </th>
-                                <th scope="col" className="px-6 py-4 text-left text-base font-bold text-gray-700 uppercase tracking-wider">
-                                    Total Rows
-                                </th>
-                                <th scope="col" className="px-6 py-4 text-right text-base font-bold text-gray-700 uppercase tracking-wider">
-                                    Actions
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody className="bg-white divide-y divide-gray-200">
-                            {records.map((record) => (
-                                <tr key={record.batch_id} className="hover:bg-gray-50">
-                                    <td className="px-6 py-5 whitespace-nowrap text-base font-semibold text-gray-900">
-                                        {new Date(record.upload_timestamp).toLocaleString()}
-                                    </td>
-                                    <td className="px-6 py-5 whitespace-nowrap text-base text-gray-600">
-                                        {formatDateRange(record.min_date, record.max_date)}
-                                    </td>
-                                    <td className="px-6 py-5 whitespace-nowrap text-base text-gray-600 font-medium">
-                                        {record.total_rows} orders
-                                    </td>
-                                    <td className="px-6 py-5 text-right text-base space-x-3">
-                                        {confirmingDelete === record.batch_id ? (
-                                            <div className="flex items-center justify-end gap-3" role="alert">
-                                                <span className="text-base font-bold text-red-600">Confirm delete?</span>
-                                                <button
-                                                    onClick={() => handleDeleteRecord(record.batch_id)}
-                                                    disabled={deletingBatch === record.batch_id}
-                                                    className="inline-flex items-center px-4 py-2 rounded-lg text-base font-bold text-white bg-red-600 hover:bg-red-700 transition-all shadow-sm"
-                                                    aria-label={`Confirm permanent deletion of batch from ${new Date(record.upload_timestamp).toLocaleString()}`}
-                                                >
-                                                    {deletingBatch === record.batch_id ? 'Deleting...' : 'Yes, Delete'}
-                                                </button>
-                                                <button
-                                                    onClick={() => setConfirmingDelete(null)}
-                                                    className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg text-base font-bold text-gray-700 bg-white hover:bg-gray-50 transition-all"
-                                                >
-                                                    Cancel
-                                                </button>
-                                            </div>
-                                        ) : (
-                                            <>
-                                                <button
-                                                    onClick={() => handleLoadRecord(record.batch_id)}
-                                                    disabled={loadingBatch === record.batch_id || deletingBatch === record.batch_id}
-                                                    className="inline-flex items-center px-5 py-2.5 border border-transparent rounded-lg shadow-sm text-base font-bold text-white bg-blue-600 hover:bg-blue-700 transition-all disabled:opacity-50"
-                                                    aria-label={`View reports for batch from ${new Date(record.upload_timestamp).toLocaleString()}`}
-                                                >
-                                                    {loadingBatch === record.batch_id ? 'Loading...' : 'View Reports'}
-                                                </button>
-                                                <button
-                                                    onClick={() => setConfirmingDelete(record.batch_id)}
-                                                    disabled={loadingBatch === record.batch_id}
-                                                    className="inline-flex items-center px-5 py-2.5 border border-red-200 rounded-lg shadow-sm text-base font-bold text-red-600 bg-red-50 hover:bg-red-100 transition-all disabled:opacity-50"
-                                                    aria-label={`Delete batch from ${new Date(record.upload_timestamp).toLocaleString()}`}
-                                                >
-                                                    Delete
-                                                </button>
-                                            </>
-                                        )}
-                                    </td>
+                <div className="overflow-hidden border border-slate-200/80 rounded-2xl shadow-sm bg-white">
+                    <div className="overflow-x-auto">
+                        <table className="min-w-full divide-y divide-slate-200/70" aria-label="Order Upload History">
+                            <thead className="bg-slate-50/70">
+                                <tr>
+                                    <th scope="col" className="px-5 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">
+                                        Import Time
+                                    </th>
+                                    <th scope="col" className="px-5 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">
+                                        Data Date Range
+                                    </th>
+                                    <th scope="col" className="px-5 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">
+                                        Records Count
+                                    </th>
+                                    <th scope="col" className="px-5 py-4 text-right text-xs font-bold text-slate-500 uppercase tracking-wider">
+                                        Actions
+                                    </th>
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100 bg-white">
+                                {records.map((record) => (
+                                    <tr key={record.batch_id} className="hover:bg-slate-50/40 transition-colors">
+                                        <td className="px-5 py-4 whitespace-nowrap text-sm font-bold text-slate-900">
+                                            {new Date(record.upload_timestamp).toLocaleString()}
+                                        </td>
+                                        <td className="px-5 py-4 whitespace-nowrap text-sm font-medium text-slate-600">
+                                            <span className="flex items-center gap-1.5">
+                                                <Calendar className="w-4 h-4 text-slate-400" />
+                                                {formatDateRange(record.min_date, record.max_date)}
+                                            </span>
+                                        </td>
+                                        <td className="px-5 py-4 whitespace-nowrap text-sm text-slate-600 font-semibold">
+                                            <span className="flex items-center gap-1.5">
+                                                <FileSpreadsheet className="w-4 h-4 text-slate-400" />
+                                                {record.total_rows} orders
+                                            </span>
+                                        </td>
+                                        <td className="px-5 py-4 text-right text-sm">
+                                            {confirmingDelete === record.batch_id ? (
+                                                <div className="flex items-center justify-end gap-2" role="alert">
+                                                    <span className="text-xs font-bold text-red-600 flex items-center gap-1">
+                                                        <AlertTriangle className="w-3.5 h-3.5" />
+                                                        Delete?
+                                                    </span>
+                                                    <button
+                                                        onClick={() => handleDeleteRecord(record.batch_id)}
+                                                        disabled={deletingBatch === record.batch_id}
+                                                        className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg text-xs shadow-sm transition-all"
+                                                        aria-label="Confirm permanent deletion of batch"
+                                                    >
+                                                        {deletingBatch === record.batch_id ? 'Deleting...' : 'Delete'}
+                                                    </button>
+                                                    <button
+                                                        onClick={() => setConfirmingDelete(null)}
+                                                        className="px-3 py-1.5 border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-bold rounded-lg text-xs transition-all"
+                                                    >
+                                                        Cancel
+                                                    </button>
+                                                </div>
+                                            ) : (
+                                                <div className="flex items-center justify-end gap-2.5">
+                                                    <button
+                                                        onClick={() => handleLoadRecord(record.batch_id)}
+                                                        disabled={loadingBatch === record.batch_id || deletingBatch === record.batch_id}
+                                                        className="inline-flex items-center gap-1 px-4.5 py-2 border border-transparent rounded-xl shadow-sm text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 transition-all disabled:opacity-50"
+                                                        aria-label="Load reports for historical batch"
+                                                    >
+                                                        <BookOpen className="w-3.5 h-3.5" />
+                                                        {loadingBatch === record.batch_id ? 'Loading...' : 'View'}
+                                                    </button>
+                                                    <button
+                                                        onClick={() => setConfirmingDelete(record.batch_id)}
+                                                        disabled={loadingBatch === record.batch_id}
+                                                        className="inline-flex items-center gap-1 px-3 py-2 border border-red-200 rounded-xl text-xs font-bold text-red-600 hover:bg-red-50 transition-all disabled:opacity-50"
+                                                        aria-label="Delete batch"
+                                                    >
+                                                        <Trash2 className="w-3.5 h-3.5" />
+                                                        Delete
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             )}
         </div>

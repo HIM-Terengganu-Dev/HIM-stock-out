@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { Calendar } from 'lucide-react';
+import { Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface CustomDateInputProps {
   value: string;
@@ -107,44 +107,40 @@ export default function CustomDateInput({ value, onChange, placeholder = 'Select
           value={value}
           onClick={handleInputClick}
           placeholder={placeholder}
-          className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 cursor-pointer bg-white"
+          className="w-full px-4 py-2.5 pr-10 border border-slate-300 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 cursor-pointer bg-white rounded-xl outline-none transition-all shadow-sm font-medium text-slate-700"
         />
-        <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
-          <Calendar className="w-5 h-5 text-gray-400" />
+        <div className="absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+          <Calendar className="w-5 h-5" />
         </div>
       </div>
       
       {isOpen && (
-        <div className="absolute right-0 top-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 w-64 p-4">
+        <div className="absolute right-0 top-full mt-2 bg-white border border-slate-200/80 rounded-2xl shadow-xl shadow-slate-100/40 z-50 w-68 p-4.5 animate-in fade-in zoom-in-95 duration-150">
           {/* Calendar Header */}
           <div className="flex items-center justify-between mb-4">
             <button
               onClick={() => navigateMonth('prev')}
-              className="p-1 hover:bg-gray-100 rounded"
+              className="p-1.5 hover:bg-slate-50 border border-slate-100 rounded-lg transition-all"
               type="button"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
+              <ChevronLeft className="w-4 h-4 text-slate-600" />
             </button>
-            <h3 className="font-semibold text-gray-900">
+            <h3 className="font-bold text-slate-800 text-sm">
               {monthNames[displayDate.getMonth()]} {displayDate.getFullYear()}
             </h3>
             <button
               onClick={() => navigateMonth('next')}
-              className="p-1 hover:bg-gray-100 rounded"
+              className="p-1.5 hover:bg-slate-50 border border-slate-100 rounded-lg transition-all"
               type="button"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
+              <ChevronRight className="w-4 h-4 text-slate-600" />
             </button>
           </div>
 
           {/* Day Names */}
           <div className="grid grid-cols-7 gap-1 mb-2">
             {dayNames.map(day => (
-              <div key={day} className="text-center text-xs font-medium text-gray-500 py-1">
+              <div key={day} className="text-center text-[10px] font-extrabold text-slate-400 py-1 uppercase tracking-wider">
                 {day}
               </div>
             ))}
@@ -161,12 +157,12 @@ export default function CustomDateInput({ value, onChange, placeholder = 'Select
                   key={day}
                   onClick={() => handleDateSelect(new Date(displayDate.getFullYear(), displayDate.getMonth(), day))}
                   className={`
-                    aspect-square flex items-center justify-center text-sm rounded
+                    aspect-square flex items-center justify-center text-xs rounded-xl transition-all font-semibold
                     ${isSelected(day) 
-                      ? 'bg-blue-600 text-white font-semibold' 
+                      ? 'bg-indigo-600 text-white font-extrabold shadow-md shadow-indigo-100' 
                       : isToday(day)
-                      ? 'bg-blue-50 text-blue-600 font-semibold'
-                      : 'text-gray-700 hover:bg-gray-100'
+                      ? 'bg-indigo-50 text-indigo-700 font-extrabold border border-indigo-100'
+                      : 'text-slate-700 hover:bg-slate-50'
                     }
                   `}
                   type="button"
@@ -181,4 +177,3 @@ export default function CustomDateInput({ value, onChange, placeholder = 'Select
     </div>
   );
 }
-

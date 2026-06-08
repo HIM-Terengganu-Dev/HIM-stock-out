@@ -11,6 +11,7 @@ import MerchantSkuManager from '@/components/MerchantSkuManager';
 import SkuNotification from '@/components/SkuNotification';
 import DateRangePicker from '@/components/DateRangePicker';
 import PastRecordsView from '@/components/PastRecordsView';
+import AddSkuModal from '@/components/AddSkuModal';
 
 export default function Home() {
   const [orders, setOrders] = useState<OrderRow[]>([]);
@@ -28,11 +29,57 @@ export default function Home() {
   const [filteredOrders, setFilteredOrders] = useState<OrderRow[]>([]);
 
   // UI State
-  const [activeTab, setActiveTab] = useState('summary');
+  const [activeTab, setActiveTab] = useState('report1'); // Default to Report 1 overview
   const [showNotification, setShowNotification] = useState(false);
   const [dateRange, setDateRange] = useState<{ start: Date | null, end: Date | null }>({ start: null, end: null });
   const [pastRecordsRefreshKey, setPastRecordsRefreshKey] = useState(0);
   const [dbSaveStatus, setDbSaveStatus] = useState<{ ok: boolean; message: string } | null>(null);
+
+  // New SKU & Session States
+  const [activeFileName, setActiveFileName] = useState<string | null>(null);
+  const [selectedMissingSku, setSelectedMissingSku] = useState<string | null>(null);
+  const [showAddModal, setShowAddModal] = useState(false);
+
+  // Reset session function to allow uploading different file
+  const resetActiveSession = () => {
+    setOrders([]);
+    setFilteredOrders([]);
+    setReport1([]);
+    setReport2([]);
+    setReport3({});
+    setReport4(null);
+    setBreakdownReport([]);
+    setManualOrderReport([]);
+    setMissingMerchantSkus([]);
+    setActiveFileName(null);
+    setDateRange({ start: null, end: null });
+    setDbSaveStatus(null);
+    setShowNotification(false);
+  };
+
+  // Callback after SKU is registered successfully - updates data and recalculates reports in real-time
+  const handleSkuRegistered = async () => {
+    try {
+      const response = await fetch('/api/merchant-skus/data', { cache: 'no-store' });
+      if (response.ok) {
+        const data = await response.json();
+        updateMerchantSkusData(data);
+        
+        const updatedMissing = findMissingMerchantSkus(orders);
+        setMissingMerchantSkus(updatedMissing);
+        generateAllReports(orders, dateRange);
+        
+        setShowAddModal(false);
+        setSelectedMissingSku(null);
+        
+        if (updatedMissing.length === 0) {
+          setShowNotification(false);
+        }
+      }
+    } catch (err) {
+      console.error('Failed to refresh data after SKU registration:', err);
+    }
+  };
 
   // Function to generate all reports with current date range
   const generateAllReports = useCallback((orders: OrderRow[], dateRange: { start: Date | null, end: Date | null }) => {
@@ -163,6 +210,7 @@ export default function Home() {
   const handleFileUpload = useCallback(async (file: File) => {
     setLoading(true);
     setError(null);
+    setActiveFileName(file.name);
 
     try {
       // Ensure merchant SKU data is loaded before analysis
@@ -277,30 +325,75 @@ export default function Home() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4">
+    <div className="min-h-screen bg-slate-50/50 py-10 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
-        <div className="flex items-start justify-between mb-6">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8 border-b border-slate-200/60 pb-6">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Stock-Out Tracker</h1>
-            <p className="text-gray-600 mt-1">Upload your orders Excel file to generate visual stock-out reports</p>
+            <div className="flex items-center gap-2.5">
+              <span className="h-2.5 w-2.5 rounded-full bg-indigo-600 animate-pulse" />
+              <span className="text-sm font-bold text-indigo-600 uppercase tracking-wider">Inventory Analysis Dashboard</span>
+            </div>
+            <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl mt-1.5 bg-gradient-to-r from-slate-900 via-indigo-950 to-blue-900 bg-clip-text text-transparent">
+              Stock-Out Tracker
+            </h1>
+            <p className="text-slate-500 mt-1.5 font-medium text-base">
+              Upload your orders spreadsheet to analyze stock-out quantities, component deducts, and channel statistics.
+            </p>
           </div>
-          <div></div>
         </div>
 
-        <div className="flex gap-6 mb-8">
-          {/* Left side - Notification area (25%) */}
-          {showNotification && (
-            <SkuNotification
-              missingSkus={missingMerchantSkus}
-              onClose={() => setShowNotification(false)}
-            />
-          )}
-
-          {/* Right side - File Upload (75%) */}
-          <div className={`${showNotification ? 'w-3/4' : 'w-full'}`}>
+        {/* Active Session OR File Upload Dropzone */}
+        {orders.length === 0 ? (
+          <div className="mb-6">
             <FileUpload onFileUpload={handleFileUpload} loading={loading} />
           </div>
-        </div>
+        ) : (
+          <div className="space-y-4 mb-6">
+            {/* Active Session Summary Panel */}
+            <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-in fade-in duration-200">
+              <div className="flex items-center gap-4">
+                <div className="p-3 bg-blue-50 text-blue-600 rounded-2xl border border-blue-100 flex-shrink-0">
+                  <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-gray-900 flex flex-wrap items-center gap-2">
+                    <span>Active Session:</span>
+                    {activeFileName && (
+                      <span className="text-sm font-bold text-blue-700 bg-blue-50 border border-blue-100 px-2.5 py-0.5 rounded-lg font-mono">
+                        {activeFileName}
+                      </span>
+                    )}
+                  </h3>
+                  <p className="text-base text-gray-600 mt-0.5 font-medium">
+                    Loaded <span className="font-bold text-gray-800">{orders.length}</span> orders.
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={resetActiveSession}
+                className="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-xl transition-all border border-gray-200 active:scale-95 text-base flex-shrink-0"
+              >
+                Upload Different File
+              </button>
+            </div>
+
+            {/* Collapsible/Redesigned SkuNotification (Full-width) */}
+            {showNotification && (
+              <div className="animate-in fade-in slide-in-from-top duration-300">
+                <SkuNotification
+                  missingSkus={missingMerchantSkus}
+                  onClose={() => setShowNotification(false)}
+                  onAddSku={(sku) => {
+                    setSelectedMissingSku(sku);
+                    setShowAddModal(true);
+                  }}
+                />
+              </div>
+            )}
+          </div>
+        )}
 
         {error && (
           <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
@@ -334,7 +427,7 @@ export default function Home() {
         <div className="mt-8">
           <ReportTabs activeTab={activeTab} onTabChange={setActiveTab} tabs={tabs} />
 
-          <div className="bg-white rounded-lg shadow min-h-[400px] p-6">
+          <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm shadow-slate-100/40 min-h-[400px] p-6 sm:p-8 animate-in fade-in duration-300">
             {activeTab === 'report1' && (
               <ReportContainer
                 title="Report 1: All Marketplace (Excluding Canceled)"
@@ -439,12 +532,19 @@ export default function Home() {
               <PastRecordsView
                 key={pastRecordsRefreshKey}
                 refreshKey={pastRecordsRefreshKey}
-                onLoadRecord={(loadedOrders) => {
+                onLoadRecord={(loadedOrders: OrderRow[], uploadTime?: string) => {
                   setOrders(loadedOrders);
                   setFilteredOrders(loadedOrders);
                   generateAllReports(loadedOrders, { start: null, end: null });
                   setDateRange({ start: null, end: null });
                   setActiveTab('report1');
+                  const timeStr = uploadTime ? new Date(uploadTime).toLocaleString() : 'Unknown Time';
+                  setActiveFileName(`Database Batch (Uploaded ${timeStr})`);
+                  
+                  // Re-evaluate missing SKUs list for this batch
+                  const missing = findMissingMerchantSkus(loadedOrders);
+                  setMissingMerchantSkus(missing);
+                  setShowNotification(missing.length > 0);
                 }}
               />
             )}
@@ -463,6 +563,18 @@ export default function Home() {
           </div>
         </div>
       </div>
+
+      {/* Register SKU Modal Overlay */}
+      {showAddModal && selectedMissingSku && (
+        <AddSkuModal
+          sku={selectedMissingSku}
+          onClose={() => {
+            setShowAddModal(false);
+            setSelectedMissingSku(null);
+          }}
+          onSave={handleSkuRegistered}
+        />
+      )}
     </div>
   );
 }

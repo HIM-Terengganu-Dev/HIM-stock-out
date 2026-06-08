@@ -259,65 +259,71 @@ export default function MerchantSkuManager() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold text-gray-900">Merchant SKU Management</h2>
-        <p className="text-base text-gray-500">All data is saved directly to the database. No file sync needed.</p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
+        <div>
+          <h2 className="text-xl font-extrabold text-slate-900">Merchant SKU Registry</h2>
+          <p className="text-sm font-semibold text-slate-500 mt-0.5">Add, edit, or delete single products and combo packages.</p>
+        </div>
+        <p className="text-xs font-bold text-emerald-600 bg-emerald-50 border border-emerald-100 px-3 py-1.5 rounded-xl self-start sm:self-center">
+          ✅ Connected directly to Postgres
+        </p>
       </div>
 
       {error && (
-        <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
+        <div className="p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm font-semibold animate-in fade-in duration-200">
           {error}
         </div>
       )}
 
       {success && (
-        <div className="p-4 bg-green-50 border border-green-200 rounded-lg text-green-700">
+        <div className="p-4 bg-green-50 border border-green-200 rounded-xl text-green-700 text-sm font-semibold animate-in fade-in duration-200">
           {success}
         </div>
       )}
 
-      <div className="border-b border-gray-200">
-        <nav className="-mb-px flex space-x-8" role="tablist" aria-label="SKU Type Navigation">
-          <button
-            onClick={() => setActiveType('single')}
-            role="tab"
-            aria-selected={activeType === 'single'}
-            aria-controls="single-sku-panel"
-            className={`py-4 px-1 border-b-2 font-medium text-base ${activeType === 'single'
-                ? 'border-blue-500 text-blue-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700'
-              }`}
-          >
-            Single SKUs ({singleSkus.length})
-          </button>
-          <button
-            onClick={() => setActiveType('combo')}
-            role="tab"
-            aria-selected={activeType === 'combo'}
-            aria-controls="combo-sku-panel"
-            className={`py-4 px-1 border-b-2 font-medium text-base ${activeType === 'combo'
-                ? 'border-blue-500 text-blue-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700'
-              }`}
-          >
-            Combo SKUs ({comboSkus.length})
-          </button>
-        </nav>
+      {/* Segmented Control Selector */}
+      <div className="bg-slate-100/70 p-1 rounded-xl shadow-inner inline-flex gap-1">
+        <button
+          onClick={() => setActiveType('single')}
+          role="tab"
+          aria-selected={activeType === 'single'}
+          aria-controls="single-sku-panel"
+          className={`py-2 px-5 rounded-lg font-bold text-xs transition-all ${
+            activeType === 'single'
+              ? 'bg-white text-indigo-700 shadow-sm'
+              : 'text-slate-600 hover:text-slate-900'
+          }`}
+        >
+          Single SKUs ({singleSkus.length})
+        </button>
+        <button
+          onClick={() => setActiveType('combo')}
+          role="tab"
+          aria-selected={activeType === 'combo'}
+          aria-controls="combo-sku-panel"
+          className={`py-2 px-5 rounded-lg font-bold text-xs transition-all ${
+            activeType === 'combo'
+              ? 'bg-white text-indigo-700 shadow-sm'
+              : 'text-slate-600 hover:text-slate-900'
+          }`}
+        >
+          Combo SKUs ({comboSkus.length})
+        </button>
       </div>
 
       {activeType === 'single' && (
         <div className="space-y-4">
           <div className="flex justify-between items-center">
-            <h3 className="text-lg font-semibold">Single SKUs</h3>
+            <h3 className="text-base font-extrabold text-slate-800">Single Product Directory</h3>
             <button
               onClick={() => {
                 setShowSingleForm(true);
                 setEditingSingle(null);
                 setSingleForm({ merchant_sku: '', product_category: '', sale_class: '' });
               }}
-              className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+              className="px-4.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold shadow-md shadow-indigo-100 text-sm transition-all active:scale-95"
             >
-              Add Single SKU
+              + Add Product SKU
             </button>
           </div>
 

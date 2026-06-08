@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useState, useRef } from 'react';
+import { UploadCloud, CheckCircle } from 'lucide-react';
 
 interface FileUploadProps {
   onFileUpload: (file: File) => void;
@@ -59,12 +60,12 @@ export default function FileUpload({ onFileUpload, loading }: FileUploadProps) {
       role="region"
       aria-label="Excel File Upload Dropzone"
       className={`
-        border-2 border-dashed rounded-xl p-12 text-center transition-all duration-200
+        border-2 border-dashed rounded-2xl p-10 md:p-14 text-center transition-all duration-300 transform
         ${isDragging 
-          ? 'border-blue-500 bg-blue-50' 
-          : 'border-gray-300 bg-white hover:border-gray-400 focus-within:border-blue-500'
+          ? 'border-indigo-500 bg-indigo-50/40 scale-[1.01] shadow-xl shadow-indigo-50/50' 
+          : 'border-slate-300 bg-white hover:border-slate-400 hover:shadow-md hover:-translate-y-0.5'
         }
-        ${loading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
+        ${loading ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}
       `}
     >
       <input
@@ -76,52 +77,46 @@ export default function FileUpload({ onFileUpload, loading }: FileUploadProps) {
         className="hidden"
         id="file-upload"
       />
-      <label htmlFor="file-upload" className="cursor-pointer">
+      <label htmlFor="file-upload" className="cursor-pointer block w-full h-full">
         {loading ? (
-          <div className="flex flex-col items-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
-            <p className="text-gray-600">Processing file...</p>
+          <div className="flex flex-col items-center py-6">
+            <div className="relative">
+              <div className="animate-spin rounded-full h-14 w-14 border-4 border-slate-100 border-t-indigo-600 mb-4"></div>
+            </div>
+            <p className="text-lg font-bold text-slate-800 animate-pulse">Analyzing Orders Spreadsheet...</p>
+            <p className="text-sm text-slate-500 mt-1 font-medium">Extracting rows & syncing with database</p>
           </div>
         ) : (
           <div className="flex flex-col items-center">
-            <svg
-              className="w-16 h-16 text-gray-400 mb-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              aria-hidden="true"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
-              />
-            </svg>
-            <p className="text-xl font-semibold text-gray-800 mb-2">
-              Drag and drop your Excel file here
+            {/* Styled Icon Wrapper */}
+            <div className={`p-4 rounded-full mb-5 transition-all duration-300 ${isDragging ? 'bg-indigo-100 text-indigo-600 scale-110' : 'bg-slate-50 text-slate-400'}`}>
+              <UploadCloud className={`w-12 h-12 ${isDragging ? 'animate-bounce' : ''}`} />
+            </div>
+
+            <p className="text-xl font-bold text-slate-800 mb-1">
+              Drag and drop your spreadsheet here
             </p>
-            <p className="text-base text-gray-500 mb-4 font-medium uppercase tracking-wider">or</p>
+            <p className="text-sm text-slate-500 mb-4 font-medium">
+              Only Excel formats (.xlsx, .xls) are supported
+            </p>
+            
+            <div className="flex items-center gap-3 w-full justify-center my-3">
+              <div className="h-[1px] bg-slate-200 w-16" />
+              <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">or</span>
+              <div className="h-[1px] bg-slate-200 w-16" />
+            </div>
+
             <button
               type="button"
               onClick={handleBrowseClick}
-              className="px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all font-semibold shadow-sm mb-4"
+              className="px-8 py-3 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white rounded-xl transition-all font-bold shadow-lg shadow-indigo-100/50 hover:shadow-indigo-200/50 active:scale-95"
               aria-label="Browse local files for upload"
             >
               Browse Files
             </button>
-            <p className="text-base text-gray-500 font-medium">
-              Supports .xlsx and .xls files
-            </p>
           </div>
         )}
       </label>
     </div>
   );
 }
-
-
-
-
-
-
